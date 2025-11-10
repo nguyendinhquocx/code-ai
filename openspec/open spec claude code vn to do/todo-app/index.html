@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Container chính - max-width 560px theo spec -->
+    <div class="container">
+        <!-- Header đơn giản -->
+        <header>
+            <h1>To-Do</h1>
+        </header>
+
+        <!-- Form nhập task mới - chỉ input, không button -->
+        <form id="taskForm" class="task-form">
+            <input
+                type="text"
+                id="taskInput"
+                placeholder="Nhập công việc mới..."
+                autocomplete="off"
+                autofocus
+            >
+        </form>
+
+        <!-- Danh sách tasks pending -->
+        <ul id="taskList" class="task-list">
+            <!-- Tasks pending được render vào đây -->
+        </ul>
+
+        <!-- Empty state - chỉ hiện khi không có tasks pending -->
+        <div id="emptyState" class="empty-state">
+            Không có task nào. Nhập ở trên để bắt đầu.
+        </div>
+
+        <!-- Section tasks đã hoàn thành - collapsible -->
+        <div id="completedSection" class="completed-section" style="display: none;">
+            <button id="completedHeader" class="completed-header" type="button">
+                <span class="collapse-icon">▶</span>
+                <span id="completedTitle">Đã hoàn thành (0)</span>
+            </button>
+            <ul id="completedList" class="task-list completed-list" style="display: none;">
+                <!-- Tasks completed được render vào đây -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Load JavaScript modules -->
+    <script src="storage.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

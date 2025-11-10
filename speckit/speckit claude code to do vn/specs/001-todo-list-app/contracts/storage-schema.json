@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TODO List Storage Schema",
+  "description": "JSON Schema cho localStorage 'todos' key. Validates cấu trúc array of todos.",
+  "type": "array",
+  "items": {
+    "$ref": "#/definitions/Todo"
+  },
+  "definitions": {
+    "Todo": {
+      "type": "object",
+      "required": ["id", "title", "completed", "createdAt", "updatedAt", "subtasks"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^todo-[0-9]+-[a-z0-9]+$",
+          "description": "Unique identifier. Format: todo-{timestamp}-{random}"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Tiêu đề todo. Required, max 500 characters."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Mô tả chi tiết. Optional, max 2000 characters."
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Trạng thái hoàn thành. true = completed, false = active."
+        },
+        "createdAt": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Unix timestamp (ms) khi todo được tạo."
+        },
+        "updatedAt": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Unix timestamp (ms) khi todo được update lần cuối."
+        },
+        "subtasks": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "$ref": "#/definitions/Subtask"
+          },
+          "description": "Danh sách subtasks. Max 50 subtasks per todo."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Subtask": {
+      "type": "object",
+      "required": ["id", "title", "completed"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^subtask-[0-9]+-[a-z0-9]+$",
+          "description": "Unique identifier. Format: subtask-{timestamp}-{random}"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "description": "Tiêu đề subtask. Required, max 300 characters."
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Trạng thái hoàn thành subtask."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
