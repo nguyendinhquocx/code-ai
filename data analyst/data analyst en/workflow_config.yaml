@@ -1,0 +1,418 @@
+# Analytics Workflow Configuration
+# Version: 1.1.0
+# Last Updated: 2025-11-14
+#
+# Changelog v1.1.0:
+# - Enhanced: Chart naming standards (7 EDA charts + business charts)
+# - Added: Code editable requirements
+# - Updated: Output structure với statics module đầy đủ
+
+# =============================================================================
+# PROJECT SETTINGS
+# =============================================================================
+project:
+  name: "plan 2026"  # Auto-filled or user-specified
+  type: "financial"  # Options: financial, marketing, operations, custom
+  description: "So sánh kế hoạch 2026 vs thực đạt 2025"
+  created_date: "2025-11-14"
+
+# =============================================================================
+# DATA SOURCES
+# =============================================================================
+data:
+  # Primary data file
+  primary_file: "excel/total/plan 2026/data.xlsx"
+  file_type: "auto"  # Options: auto, xlsx, csv, json, pdf
+
+  # Excel specific
+  expected_sheets:
+    - "chi tieu"
+    - "ngan sach"
+    - "ct ngan sach"
+    - "dinh bien"
+    - "ke hoach"
+
+  # CSV specific (if using CSV)
+  csv_encoding: "utf-8"  # Options: utf-8, latin1, cp1252
+  csv_delimiter: ","
+
+  # JSON specific (if using JSON)
+  json_orient: "records"  # Options: records, columns, index
+
+# =============================================================================
+# ANALYSIS SETTINGS
+# =============================================================================
+analysis:
+  # Column definitions
+  revenue_columns:  # Auto-detect or specify
+    - "PACKAGE"
+    - "CHC"
+    - "REF"
+    - "PHI"
+    - "Digital"
+
+  time_column: "thang"      # Month column
+  year_column: "nam"        # Year column
+  total_column: "TONG"      # Total revenue column (auto-calculate if missing)
+
+  # Years to compare
+  base_year: 2025
+  comparison_year: 2026
+
+  # Thresholds
+  cv_thresholds:
+    stable: 20      # CV < 20% = Stable
+    medium: 50      # CV 20-50% = Medium risk
+    high: 50        # CV > 50% = High risk
+
+  # Outlier detection
+  outlier_method: "iqr"     # Options: iqr, zscore
+  outlier_threshold: 1.5    # For IQR method (1.5 is standard)
+
+  # Missing values
+  missing_value_threshold: 50  # % - Stop if > 50% missing in key columns
+  auto_fill_method: "zero"     # Options: zero, mean, median, forward_fill
+
+  # Correlation
+  correlation_high: 0.7    # |r| > 0.7 = High correlation
+  correlation_low: 0.3     # |r| < 0.3 = Low correlation
+
+# =============================================================================
+# BUSINESS METRICS
+# =============================================================================
+metrics:
+  # Which metrics to calculate
+  calculate:
+    - "growth_rate"           # YoY growth %
+    - "growth_contribution"   # Contribution to total growth
+    - "market_share"          # % of total revenue
+    - "peak_months"           # Identify peak periods
+    - "seasonality_index"     # Measure seasonality
+    - "cv"                    # Coefficient of variation
+
+  # Custom metrics (if needed)
+  custom:
+    # budget_efficiency: "revenue / budget * 100"
+    # revenue_per_headcount: "revenue / headcount"
+
+# =============================================================================
+# VISUALIZATION
+# =============================================================================
+visualization:
+  # Design principles
+  design:
+    colors:
+      primary: "#000000"      # Black
+      secondary: "#808080"    # Gray
+      light: "#F5F5F5"        # Light gray
+      accent_blue: "#2962FF"  # Blue accent
+      accent_red: "#F23645"   # Red accent
+
+    font:
+      family: ["Calibri", "Arial", "sans-serif"]
+      size: 10
+
+    dpi:
+      display: 150  # For notebook display
+      export: 300   # For saving PNG
+
+    # Restrictions
+    no_pie_charts: true
+    no_emojis: true
+    no_icons: true
+    minimal_style: true
+
+  # Chart configuration
+  charts:
+    # EDA charts (always generate - 7 standard charts)
+    eda:
+      enabled: true
+      output_dir: "statics/charts_eda"  # Updated in v1.1.0
+      charts:
+        - "01_boxplot_revenue_by_year"        # Outliers & distribution
+        - "02_histogram_revenue_distribution"  # Overall distribution
+        - "03_correlation_heatmap"            # Variable relationships
+        - "04_violin_revenue_by_year"         # Distribution shape
+        - "05_timeseries_monthly_trend"       # Time patterns
+        - "06_cv_comparison_by_year"          # Variability analysis
+        - "07_statistics_summary_table"       # Stats table as image
+
+    # Business analysis charts (project-specific)
+    business:
+      enabled: true
+      output_dir: "charts"
+      charts:
+        - name: "doanh_thu_tong"
+          type: "line"
+          data: ["2025_total", "2026_total"]
+
+        - name: "growth_contribution_heatmap"
+          type: "heatmap"
+          data: "growth_contribution_matrix"
+
+        - name: "market_share_evolution"
+          type: "stacked_bar"
+          data: ["2025_share", "2026_share"]
+
+        # Add more custom charts as needed
+
+# =============================================================================
+# OUTPUTS
+# =============================================================================
+outputs:
+  # Output formats
+  formats:
+    charts: "png"        # png, svg, pdf
+    stats: "csv"         # csv, excel, json
+    insights: "markdown" # markdown, html, pdf
+
+  # Chart settings
+  charts:
+    dpi: 300
+    format: "png"
+    facecolor: "white"
+    bbox_inches: "tight"
+
+  # Documentation
+  documentation:
+    generate_readme: true
+    generate_guide: false          # huong_dan_doc_bieu_do.md
+    generate_presentation: false   # PowerPoint (future)
+
+  # Folder structure (v1.1.0)
+  structure:
+    code: "code"                # Business analysis code
+    charts: "charts"            # Business-specific charts
+    document: "document"        # Insights + metrics + README
+    statics: "statics"          # EDA module (full statistics)
+    statics_code: "statics/code"         # EDA notebooks + scripts
+    statics_charts: "statics/charts_eda" # 7 standard EDA charts
+    statics_doc: "statics/document"      # EDA statistics exports
+
+  # Code files (v1.1.0 - EDITABLE requirements)
+  code_files:
+    # Business analysis
+    business_notebook: "code/analysis.ipynb"  # Interactive
+    business_script: "code/analysis.py"       # Automated
+
+    # EDA / Statistics
+    eda_notebook: "statics/code/eda.ipynb"           # Interactive
+    eda_script: "statics/code/generate_charts.py"    # Automated
+    statics_readme: "statics/README.md"              # Documentation
+
+# =============================================================================
+# VALIDATION
+# =============================================================================
+validation:
+  # Validation strictness
+  strict_mode: false  # If true, stop on any warning
+
+  # Auto-fix settings
+  auto_fix:
+    enabled: true
+    safe_only: true  # Only auto-fix safe operations (fillna, drop_duplicates)
+
+  # Quality gates
+  gates:
+    after_load:
+      - "check_schema"
+      - "check_missing_values"
+      - "check_duplicates"
+
+    after_eda:
+      - "check_distribution"
+      - "check_outliers"
+      - "validate_stats"
+
+    after_analysis:
+      - "sanity_check_metrics"
+      - "validate_growth_rates"
+
+    before_insights:
+      - "cross_validate_data_charts"
+      - "consistency_check"
+
+  # Consistency check
+  consistency:
+    enabled: true
+    check_chart_references: true   # Insights reference existing charts?
+    check_data_matches: true       # Numbers in insights match data?
+    check_completeness: true       # All key findings covered?
+
+# =============================================================================
+# ERROR HANDLING
+# =============================================================================
+error_handling:
+  # Behavior on errors
+  on_critical_error:
+    action: "stop"  # Options: stop, ask_user, skip
+
+  on_warning:
+    action: "log_continue"  # Options: log_continue, ask_user, ignore
+
+  on_minor_issue:
+    action: "auto_fix"  # Options: auto_fix, log, ignore
+
+  # Retry settings
+  retry:
+    enabled: true
+    max_attempts: 3
+    backoff_seconds: 5
+
+  # Checkpoint system
+  checkpoints:
+    enabled: true
+    save_after_each_phase: true
+    checkpoint_file: ".checkpoints.json"
+
+# =============================================================================
+# LOGGING
+# =============================================================================
+logging:
+  # Log level
+  level: "INFO"  # Options: DEBUG, INFO, WARNING, ERROR
+
+  # Output
+  console: true
+  file:
+    enabled: true
+    path: "workflow.log"
+    mode: "append"  # Options: append, overwrite
+
+  # Format
+  format: "%(asctime)s - %(levelname)s - %(message)s"
+  date_format: "%Y-%m-%d %H:%M:%S"
+
+  # Log retention
+  rotate:
+    enabled: false
+    max_size_mb: 10
+    backup_count: 5
+
+# =============================================================================
+# INTEGRATION
+# =============================================================================
+integration:
+  # Jupyter Notebook
+  jupyter:
+    enabled: true
+    auto_execute: false  # Auto-run notebooks?
+    timeout_seconds: 600
+
+  # Speckit
+  speckit:
+    enabled: false
+    auto_create_spec: false
+
+  # OpenSpec
+  openspec:
+    enabled: false
+    track_changes: false
+
+  # Git
+  git:
+    enabled: false
+    auto_commit: false
+    commit_message_template: "Analysis: {project_name} - {date}"
+
+# =============================================================================
+# ADVANCED SETTINGS
+# =============================================================================
+advanced:
+  # Performance
+  performance:
+    parallel_processing: false  # Enable multiprocessing?
+    max_workers: 4
+    chunk_size: 1000
+
+  # Memory management
+  memory:
+    optimize_dtypes: true       # Use optimal data types?
+    cleanup_intermediate: true  # Delete temp files?
+
+  # Experimental features
+  experimental:
+    ml_predictions: false       # Enable ML forecasting?
+    auto_insights_ai: false     # Use AI to generate insights?
+    interactive_dashboard: false # Generate HTML dashboard?
+
+# =============================================================================
+# CUSTOM RULES (User-defined)
+# =============================================================================
+custom_rules:
+  # Decision rules
+  decisions:
+    # Example: If CV > 60%, flag as critical
+    - condition: "cv > 60"
+      action: "flag_critical"
+      message: "Extremely high volatility - needs immediate attention"
+
+    # Example: If correlation < -0.5, flag cannibalization
+    - condition: "correlation < -0.5"
+      action: "flag_cannibalization"
+      message: "Potential cannibalization detected"
+
+  # Custom thresholds (override defaults)
+  thresholds:
+    # revenue_growth_target: 20  # % growth target
+    # budget_efficiency_min: 80  # % minimum efficiency
+
+# =============================================================================
+# TEMPLATES
+# =============================================================================
+templates:
+  # Insights template
+  insights:
+    template_file: "templates/insights_template.md"
+    sections:
+      - "executive_summary"
+      - "data_quality"
+      - "descriptive_stats"
+      - "business_analysis"
+      - "recommendations"
+      - "risks"
+      - "conclusion"
+
+  # README template
+  readme:
+    template_file: "templates/README_template.md"
+
+# =============================================================================
+# METADATA
+# =============================================================================
+metadata:
+  version: "1.1.0"
+  created_by: "Claude Code Assistant"
+  created_date: "2025-11-14"
+  last_modified: "2025-11-14"
+  schema_version: "1.1"
+
+  # Changelog
+  changes_v1_1_0:
+    - "Enhanced chart naming standards (7 EDA charts)"
+    - "Added code editable requirements"
+    - "Updated output structure with statics module"
+    - "Dual format support (notebook + script)"
+
+# =============================================================================
+# NOTES
+# =============================================================================
+# HOW TO USE:
+#
+# 1. Copy this file to your project directory
+# 2. Rename to: workflow_config.yaml (or keep as is)
+# 3. Modify settings as needed
+# 4. Reference in your code:
+#    ```python
+#    import yaml
+#    with open('workflow_config.yaml') as f:
+#        config = yaml.safe_load(f)
+#    ```
+#
+# 5. Or let Agent auto-detect and use defaults
+#
+# PRIORITY:
+# - User input > Config file > Defaults
+# - Agent will ask if critical settings missing
+#
+# =============================================================================
