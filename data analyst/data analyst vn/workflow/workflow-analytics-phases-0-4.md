@@ -267,6 +267,26 @@ def auto_clean(df, revenue_cols):
 
 **CRITICAL**: Tạo STATICS MODULE ĐẦY ĐỦ để có thể đọc hiểu, tinh chỉnh khi data thay đổi
 
+**AGENT AUTONOMY - Linh hoạt & Sáng tạo:**
+```
+Nguyên tắc thiết kế là HƯỚNG DẪN, không phải LUẬT CỨNG.
+
+Agent được phép:
+✓ Tự do điều chỉnh màu sắc, layout, chart types dựa trên data context
+✓ Phá vỡ quy tắc nếu có lý do chính đáng (VD: data outliers cực đoan)
+✓ Chọn chart type phù hợp nhất (boxplot, violin, kde, etc.)
+✓ Thử nghiệm và tối ưu để patterns/anomalies nổi bật
+
+Quy trình tư duy:
+1. Đọc nguyên tắc thiết kế → Hiểu TINH THẦN, không phải từng chữ
+2. Phân tích data distribution → Quyết định style & chart type
+3. Tạo chart → Áp dụng nguyên tắc LINH HOẠT
+4. Tự hỏi: "Chart này reveal insights gì? Có cần simplify không?"
+5. Optimize dựa trên câu trả lời
+
+MỤC TIÊU: Insights nổi bật, không phải follow rules mù quáng.
+```
+
 ### Step 3.0: Tạo Statics Module Structure
 
 **Mục đích**: Tạo code có thể edit, reuse, maintain khi data thay đổi
@@ -312,15 +332,116 @@ import seaborn as sns
 from pathlib import Path
 from scipy import stats
 
-# Design settings
+# Design settings - Aesthetic & Professional
 plt.rcParams['figure.dpi'] = 300
 plt.rcParams['font.size'] = 10
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['axes.linewidth'] = 1.2
+plt.rcParams['grid.linewidth'] = 0.8
+
+# Color palette: Muted, elegant tones (inspired by modern data viz)
+# Base: Soft blue-grays for professional look
+# Accent: Muted pastels for data points
 COLORS = {
-    'primary': '#000000',
-    'secondary': '#4A4A4A',
-    'tertiary': '#808080',
-    'light': '#B0B0B0'
+    'primary': '#2C3E50',      # Dark blue-gray (main text, borders)
+    'secondary': '#546E7A',    # Medium blue-gray (secondary elements)
+    'accent': '#7986CB',       # Soft indigo (highlights, important data)
+    'success': '#81C784',      # Muted green (positive trends)
+    'warning': '#FFB74D',      # Soft orange (warnings, attention)
+    'danger': '#E57373',       # Muted red (negative trends, outliers)
+    'neutral': '#B0BEC5',      # Light gray (backgrounds, grids)
+    'background': '#FAFAFA'    # Off-white (chart backgrounds)
 }
+
+# Chart-specific palettes
+PALETTE_SEQUENTIAL = ['#E8EAF6', '#C5CAE9', '#9FA8DA', '#7986CB', '#5C6BC0', '#3F51B5']  # Light to dark blue
+PALETTE_DIVERGING = ['#E57373', '#FFCC80', '#FFF9C4', '#C5E1A5', '#81C784', '#66BB6A']  # Red to green
+PALETTE_CATEGORICAL = ['#7986CB', '#81C784', '#FFB74D', '#E57373', '#64B5F6', '#A1887F']  # Distinct muted colors
+
+# CRITICAL: Chart Design Philosophy - "Less is More"
+# =====================================================
+# NGUYÊN TẮC NỀN TẢNG: Biểu đồ phải thể hiện INSIGHTS, không phải decoration
+#
+# "Remove everything that doesn't add value. Then remove more."
+# - Edward Tufte, Data Visualization Pioneer
+#
+# A. MINIMALISM BY DATA COMPLEXITY
+# ---------------------------------
+# Quy tắc: Ít data points → Ít decoration
+#
+# 1-2 data points (VD: So sánh 2 năm, 1 metric):
+#    → TUYỆT ĐỐI TỐI GIẢN
+#    → KHÔNG grid, KHÔNG viền thừa, KHÔNG background color
+#    → Chỉ data + labels + title
+#    → Màu: 1-2 màu MAX, highlight data chính
+#    → Nét mảnh, elegant
+#    → Example: Bar chart 2 cột → Chỉ 2 bars + số liệu
+#
+# 3-5 data points:
+#    → Minimal decoration
+#    → Grid chỉ khi CẦN THIẾT để đọc giá trị
+#    → Màu: Đơn sắc + 1 accent cho highlight
+#
+# 6+ data points hoặc complex (VD: Time series, correlation matrix):
+#    → Được phép decoration hỗ trợ
+#    → Grid subtle (alpha=0.3)
+#    → Màu: Palette có ý nghĩa (red=negative, green=positive)
+#
+# B. COLOR HIERARCHY - Màu phải có mục đích
+# ------------------------------------------
+# Quy tắc: "Color attracts attention. Use it wisely."
+#
+# Data chính (cần nhấn mạnh):
+#    → Màu đậm, saturated: accent (#7986CB), danger (#E57373)
+#    → VD: Bảo Việt revenue trong comparison → dùng accent
+#
+# Data phụ (context):
+#    → Màu nhạt, muted: neutral (#B0BEC5), secondary (#546E7A)
+#    → VD: Total PHI revenue (để so sánh) → dùng neutral
+#
+# Background elements (grid, borders):
+#    → Màu RẤT nhạt, alpha thấp
+#    → KHÔNG được chiếm spotlight
+#
+# C. CRITICAL: Chart Scale Best Practices
+# ----------------------------------------
+# 1. PERCENTAGE CHARTS: ALWAYS 0-100% scale
+#    - Biểu đồ % PHẢI chạy từ 0-100%, KHÔNG crop
+#    - Ví dụ: Nếu data là 27%, y-axis phải 0-100, KHÔNG phải 0-30
+#    - Lý do: Tránh misleading visualization, giữ context đúng
+#
+# 2. ABSOLUTE VALUES: Start from 0 (unless negative values exist)
+#    - Revenue, counts → start from 0
+#    - Growth rates (có thể âm) → include 0 trong range
+#
+# 3. Y-AXIS BUFFER: Thêm 10-15% padding phía trên max value
+#    - Để value labels không bị crop
+#    - ax.set_ylim(0, max_value * 1.15)
+#
+# 4. GRIDLINES: Subtle, không dominant
+#    - alpha=0.3, linestyle='--'
+#    - 1-2 data points: KHÔNG DÙNG grid
+#    - 3-5 data points: Grid chỉ khi cần đọc giá trị chính xác
+#    - 6+ data points: Grid được phép, nhưng subtle
+#
+# D. VISUAL HIERARCHY - Thứ tự ưu tiên
+# -------------------------------------
+# 1. DATA (bars, lines, points) - Đậm nhất, rõ nhất
+# 2. VALUE LABELS - Chữ đậm, gần data
+# 3. AXES LABELS & TITLE - Medium weight
+# 4. GRID & BORDERS - Nhạt nhất, alpha thấp
+# 5. BACKGROUND - Transparent hoặc off-white nhẹ
+#
+# E. EXAMPLES - Anti-patterns vs Good patterns
+# ---------------------------------------------
+# ❌ BAD: 2 bars + thick grid + heavy borders + colorful background + 5 colors
+# ✅ GOOD: 2 bars (1 accent, 1 neutral) + clean background + value labels only
+#
+# ❌ BAD: Line chart 3 years + rainbow colors + thick lines + busy legend
+# ✅ GOOD: Line chart 3 years + 1 color + thin line + minimal legend
+#
+# ❌ BAD: Percentage chart cropped 0-30% + misleading scale
+# ✅ GOOD: Percentage chart 0-100% + reference lines + clear context
 
 # Cell 2: Load Data
 BASE_DIR = Path.cwd().parent.parent.parent.parent.parent

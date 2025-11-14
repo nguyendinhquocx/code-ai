@@ -7,6 +7,213 @@
 
 ## PHASE 5: Visualization
 
+**CRITICAL**: Tạo CODE EDITABLE cho business charts để có thể regenerate khi data thay đổi
+
+**AGENT AUTONOMY - Linh hoạt & Sáng tạo:**
+```
+Nguyên tắc thiết kế là HƯỚNG DẪN, không phải LUẬT CỨNG.
+
+Agent được phép:
+✓ Tự do điều chỉnh màu sắc, layout, style dựa trên data context
+✓ Phá vỡ quy tắc nếu có lý do chính đáng (VD: data đặc biệt, insight quan trọng)
+✓ Sáng tạo chart types mới nếu phù hợp hơn
+✓ Thử nghiệm và tối ưu để insights nổi bật nhất
+
+Quy trình:
+1. Đọc nguyên tắc thiết kế → Hiểu tinh thần, không phải từng chữ
+2. Phân tích data → Quyết định style phù hợp
+3. Tạo chart → Áp dụng nguyên tắc MỘT CÁCH LINH HOẠT
+4. Tự đánh giá: "Chart này có giúp hiểu insights không?"
+5. Nếu CÓ → Keep. Nếu KHÔNG → Simplify thêm
+
+KHÔNG cứng nhắc. KHÔNG copy-paste template mù quáng.
+```
+
+### Step 5.0: Tạo Business Visualization Code Files
+
+**QUAN TRỌNG**: Tạo script hoặc thêm cells vào notebook để generate business charts
+
+**Option A: Script riêng** (recommended cho nhiều charts)
+
+**File: `code/generate_business_charts.py`**
+
+**Mục đích**:
+- Generate business-specific charts (beyond EDA)
+- Automated và reproducible
+- Có thể chỉnh sửa khi requirements thay đổi
+
+**Template Code**:
+```python
+"""
+Generate Business Charts
+Tạo charts cho business analysis (beyond EDA)
+"""
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+# =============================================================================
+# SETUP
+# =============================================================================
+
+BASE_DIR = Path(__file__).parent.parent.parent.parent.parent.parent  # hmsg/
+DATA_FILE = BASE_DIR / "path/to/data.xlsx"
+CHARTS_DIR = Path(__file__).parent.parent / "charts"
+CHARTS_DIR.mkdir(exist_ok=True)
+
+# Design settings - Aesthetic & Professional
+plt.rcParams['figure.dpi'] = 300
+plt.rcParams['font.size'] = 10
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['axes.linewidth'] = 1.2
+plt.rcParams['grid.linewidth'] = 0.8
+
+# Color palette: Muted, elegant tones (inspired by modern data viz)
+COLORS = {
+    'primary': '#2C3E50',      # Dark blue-gray (main text, borders)
+    'secondary': '#546E7A',    # Medium blue-gray (secondary elements)
+    'accent': '#7986CB',       # Soft indigo (highlights, important data)
+    'success': '#81C784',      # Muted green (positive trends)
+    'warning': '#FFB74D',      # Soft orange (warnings, attention)
+    'danger': '#E57373',       # Muted red (negative trends, outliers)
+    'neutral': '#B0BEC5',      # Light gray (backgrounds, grids)
+    'background': '#FAFAFA'    # Off-white (chart backgrounds)
+}
+
+# Chart-specific palettes
+PALETTE_SEQUENTIAL = ['#E8EAF6', '#C5CAE9', '#9FA8DA', '#7986CB', '#5C6BC0', '#3F51B5']
+PALETTE_DIVERGING = ['#E57373', '#FFCC80', '#FFF9C4', '#C5E1A5', '#81C784', '#66BB6A']
+PALETTE_CATEGORICAL = ['#7986CB', '#81C784', '#FFB74D', '#E57373', '#64B5F6', '#A1887F']
+
+# =============================================================================
+# CHART CONFIGURATIONS - Per-chart customization
+# =============================================================================
+# MỤC ĐÍCH: Mỗi chart có config riêng để dễ tweak
+# User chỉ cần sửa config, không phải đụng vào code logic
+
+# Example: Chart 1 config
+CHART1_CONFIG = {
+    'bar_color': COLORS['accent'],
+    'bar_alpha': 0.85,
+    'trend_color': COLORS['danger'],
+    'show_grid': True,  # Set False nếu data đơn giản (1-2 bars)
+    'grid_alpha': 0.3,
+    'figsize': (10, 6)
+}
+
+# Example: Chart 2 - Percentage chart
+CHART2_CONFIG = {
+    'line_color': COLORS['accent'],
+    'line_width': 3.5,
+    'reference_lines': {
+        25: {'color': COLORS['warning'], 'style': ':', 'label': 'Baseline'},
+        50: {'color': COLORS['neutral'], 'style': '--', 'label': '50%'}
+    },
+    'y_limit': (0, 100),  # CRITICAL: Always 0-100 for %
+    'show_grid': True,
+    'figsize': (10, 6)
+}
+
+# ... [More chart configs as needed]
+
+# CRITICAL: Chart Design Philosophy - "Less is More"
+# =====================================================
+# "Remove everything that doesn't add value. Then remove more." - Edward Tufte
+#
+# A. MINIMALISM BY DATA COMPLEXITY
+#    1-2 data points → TUYỆT ĐỐI TỐI GIẢN (no grid, no borders, 1-2 colors)
+#    3-5 data points → Minimal (grid chỉ khi cần, đơn sắc + 1 accent)
+#    6+ data points  → Decoration được phép (subtle grid, palette có ý nghĩa)
+#
+# B. COLOR HIERARCHY
+#    Data chính → Màu đậm (accent, danger)
+#    Data phụ   → Màu nhạt (neutral, secondary)
+#    Grid/Border → RẤT nhạt, alpha thấp
+#
+# C. SCALE BEST PRACTICES
+#    1. PERCENTAGE CHARTS: ALWAYS 0-100% (không crop!)
+#    2. ABSOLUTE VALUES: Start from 0
+#    3. Y-AXIS BUFFER: +10-15% padding
+#    4. GRIDLINES: 1-2 points=NO, 3-5=khi cần, 6+=subtle
+#
+# D. VISUAL HIERARCHY: Data > Labels > Axes > Grid > Background
+
+print("=== BUSINESS CHART GENERATION ===\n")
+
+# =============================================================================
+# LOAD DATA & CALCULATE METRICS
+# =============================================================================
+
+print("1. Loading data...")
+df = pd.read_excel(DATA_FILE)
+# ... [data processing from analysis.py]
+
+# =============================================================================
+# CHART 1: [Business-specific chart]
+# =============================================================================
+
+print("\n2. Chart 1: [Chart name]...")
+
+# Use config for easy customization
+cfg = CHART1_CONFIG
+fig, ax = plt.subplots(figsize=cfg['figsize'])
+
+# Plotting - colors from config
+ax.bar(x_data, y_data,
+       color=cfg['bar_color'],
+       alpha=cfg['bar_alpha'])
+
+# Grid from config
+if cfg['show_grid']:
+    ax.grid(axis='y', alpha=cfg['grid_alpha'])
+
+# ... [more plotting code using cfg values]
+
+plt.tight_layout()
+plt.savefig(CHARTS_DIR / "01_chart_name.png", dpi=300, bbox_inches='tight')
+plt.close()
+
+print(f"   Saved: 01_chart_name.png")
+
+# =============================================================================
+# CHART 2-N: [More charts]
+# =============================================================================
+
+# ... [more charts]
+
+print("\n" + "="*60)
+print("CHART GENERATION COMPLETE")
+print("="*60)
+```
+
+**Option B: Thêm cells vào notebook** (recommended cho ít charts)
+
+**File: `code/analysis.ipynb`** - Thêm cells sau "Save Metrics":
+
+```python
+# Cell: Generate Business Charts
+
+import matplotlib.pyplot as plt
+
+CHARTS_DIR = BASE_DIR / "charts"
+CHARTS_DIR.mkdir(exist_ok=True)
+
+# Chart 1: Revenue trend
+fig, ax = plt.subplots(figsize=(10, 6))
+# ... [plotting code]
+plt.savefig(CHARTS_DIR / "01_revenue_trend.png", dpi=300, bbox_inches='tight')
+plt.close()
+
+print("✅ Charts generated")
+```
+
+**Lưu ý**:
+- Code phải có comment tiếng Việt
+- Design: 300 DPI, black/gray/white, minimalist
+- Tất cả paths dùng `Path()` object
+- Print progress để user biết đang ở đâu
+
 ### Step 5.1: Generate Analysis Charts
 
 **Beyond EDA charts**, tạo business-specific charts:
