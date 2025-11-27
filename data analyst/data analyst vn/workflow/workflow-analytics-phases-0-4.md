@@ -1,47 +1,231 @@
 # Data Analytics Workflow - Phases 0-4
 
 **File này**: Phases 0-4 (Setup → Business Analysis)
-**Liên kết**: [`workflow-analytics-tong-quan.md`](workflow-analytics-tong-quan.md)
+**Liên kết**: [`workflow-analytics-tong-quan.md`](workflow-analytics-tong-quan.md) | [`phases-5-8.md`](workflow-analytics-phases-5-8.md)
 
+---
+
+## 📑 Quick Navigation
+
+| Phase | Nội dung | Khi nào dùng |
+|-------|----------|--------------|
+| [Phase 0](#phase-0-setup--understanding) | Setup & Question Framing | Bắt đầu project mới, peek data, gợi ý phân tích |
+| [Phase 1](#phase-1-data-ingestion) | Data Ingestion | Load Excel/CSV, inspect schema |
+| [Phase 2](#phase-2-data-quality-check) | Data Quality Check | Validate, clean, handle missing/outliers |
+| [Phase 3](#phase-3-eda-exploratory-data-analysis) | EDA (Statistical Charts) | Boxplot, histogram, correlation, CV analysis |
+| [Phase 4](#phase-4-business-analysis) | Business Analysis | Calculate metrics, growth, segmentation |
+
+**Next**: [Phases 5-8 (Visualization → Delivery)](workflow-analytics-phases-5-8.md)
 
 ---
 
 ## PHASE 0: Setup & Understanding
 
-### Step 0.1: Read User Input
-**Mục đích**: Hiểu requirements và context
+### Step 0.1: Quick Data Peek (TRƯỚC KHI HỎI)
+**Mục đích**: Đọc nhanh file để hiểu cấu trúc → GỢI Ý câu hỏi thông minh
 
 **Actions**:
-1. User kéo file vào hoặc cung cấp path
-2. User giải thích vài câu về dữ liệu
-3. Agent hỏi làm rõ nếu cần
+```python
+# Load NHANH để peek (không phân tích sâu)
+import pandas as pd
 
-**Questions Agent Nên Hỏi**:
+# Load all sheets
+dfs = pd.read_excel(file_path, sheet_name=None)
+
+# Quick inspection
+data_summary = {}
+for sheet_name, df in dfs.items():
+    data_summary[sheet_name] = {
+        'rows': len(df),
+        'columns': list(df.columns),
+        'date_cols': [col for col in df.columns if 'date' in col.lower() or 'time' in col.lower()],
+        'numeric_cols': df.select_dtypes(include=['number']).columns.tolist(),
+        'categorical_cols': df.select_dtypes(include=['object']).columns.tolist(),
+        'sample_data': df.head(2).to_dict()
+    }
+
+print(f"✅ Peeked {len(dfs)} sheets: {list(dfs.keys())}")
 ```
-1. Mục đích phân tích?
-   - So sánh periods (2025 vs 2026)?
-   - Tìm growth drivers?
-   - Identify risks?
-   - Other?
 
-2. Output mong muốn?
-   - Charts only?
-   - Insights + charts?
-   - Full analysis package?
+**Logging**:
+```
+✅ Quick peek completed
+   Sheet 'data': 1122 rows, 15 columns
+   - Date columns: ['Ngày', 'Tháng']
+   - Numeric: ['Doanh thu', 'Số lượng', ...]
+   - Categorical: ['Kênh', 'Sản phẩm', 'Khu vực', ...]
+```
 
-3. Business context?
-   - Financial? Marketing? Operations?
-   - Key metrics quan tâm?
-   - Thresholds/targets?
+### Step 0.2: Smart Question Framing
+**Mục đích**: Dựa vào peek → GỢI Ý phân tích phù hợp
+
+**AI Agent Phải LÀM**:
+1. **Phân tích cấu trúc** từ data_summary
+2. **Gợi ý 3-5 câu hỏi phân tích** phù hợp với data
+3. **Hỏi user chọn** HOẶC user tự đề xuất
+
+**Template Gợi Ý với Recommendation**:
+```
+📊 Tao đã đọc qua file data của mày. Dưới đây là các phân tích tao có thể làm:
+
+[Dựa vào data structure, AI analyze và recommend:]
+
+💡 **KHUYẾN NGHỊ: Option [X] - Comprehensive Analysis**
+   Lý do: [Giải thích dựa trên data structure]
+   - VD: "Data có {rows} rows, time series từ {start_year}-{end_year},
+     {n_channels} kênh khác nhau → nên phân tích đầy đủ để hiểu toàn cảnh"
+
+──────────────────────────────────────────
+
+1. **Phân tích xu hướng theo thời gian** ⭐ (vì có cột 'Ngày', 'Tháng')
+   - So sánh doanh thu 2023 vs 2024 vs 2025
+   - Tìm tháng peak/low performance
+   - Xu hướng tăng/giảm
+
+2. **Phân tích theo kênh/sản phẩm** ⭐ (vì có cột 'Kênh', 'Sản phẩm')
+   - Kênh nào đóng góp nhiều nhất?
+   - Sản phẩm nào growth/decline mạnh?
+   - So sánh performance giữa các kênh
+
+3. **Phân tích outliers & chất lượng dữ liệu** ⭐
+   - Tháng nào có doanh thu bất thường?
+   - Missing data ở đâu?
+   - Độ ổn định (CV) của từng kênh
+
+4. **Phân tích đối tác cụ thể** (nếu có cột partner name)
+   - VD: Bảo Việt chiếm % bao nhiêu?
+   - Xu hướng tăng/giảm của đối tác X?
+
+──────────────────────────────────────────
+
+Mày muốn:
+  (1) Làm theo khuyến nghị
+  (2) Chọn riêng (VD: "1,2,3" hoặc "chỉ làm 1")
+  (3) Mô tả ngắn
+```
+
+**Logic Recommendation** (Agent tự động analyze):
+```python
+# Recommendation logic based on data characteristics
+recommendation_score = {}
+
+# Score each option based on data structure
+if len(data_summary['date_cols']) > 0 and data_summary['rows'] > 50:
+    recommendation_score['time_series'] = 10  # High priority
+
+if len(data_summary['categorical_cols']) >= 2:
+    recommendation_score['segmentation'] = 10  # High priority
+
+if data_summary['rows'] > 100:
+    recommendation_score['statistical'] = 8  # Medium-high priority
+
+# Specific partner analysis if partner columns detected
+partner_cols = [col for col in df.columns if any(x in col.lower() for x in ['partner', 'kênh', 'channel', 'đối tác', 'bảo việt'])]
+if partner_cols:
+    recommendation_score['partner'] = 9
+
+# ALWAYS include quality check
+recommendation_score['quality'] = 10
+
+# Determine recommendation
+total_high_priority = sum(1 for score in recommendation_score.values() if score >= 9)
+
+if total_high_priority >= 3:
+    recommendation = "Comprehensive (làm hết options có ⭐)"
+    reasoning = f"Data có đủ điều kiện cho phân tích toàn diện: {rows} rows, time series {years}, {n_categories} categories"
+elif total_high_priority >= 2:
+    top_options = [k for k, v in sorted(recommendation_score.items(), key=lambda x: -x[1])[:2]]
+    recommendation = f"Focus on {top_options}"
+    reasoning = "Ưu tiên 2 phân tích quan trọng nhất dựa trên cấu trúc data"
+else:
+    top_option = max(recommendation_score.items(), key=lambda x: x[1])[0]
+    recommendation = f"Option {top_option}"
+    reasoning = "Data structure phù hợp nhất với phân tích này"
+
+# Output recommendation prominently
+print(f"💡 KHUYẾN NGHỊ: {recommendation}")
+print(f"   Lý do: {reasoning}")
+```
+
+**Quy tắc Gợi Ý**:
+```python
+# Logic gợi ý tự động
+suggestions = []
+
+# 1. Có cột date/time → Suggest time series
+if data_summary['date_cols']:
+    suggestions.append("Time series analysis (xu hướng theo thời gian)")
+
+# 2. Có >1 categorical column → Suggest segmentation
+if len(data_summary['categorical_cols']) > 0:
+    cats = ', '.join(data_summary['categorical_cols'][:3])
+    suggestions.append(f"Segmentation analysis (phân tích theo {cats})")
+
+# 3. Có numeric columns → Suggest statistical analysis
+if len(data_summary['numeric_cols']) > 2:
+    suggestions.append("Statistical analysis (outliers, distribution, correlation)")
+
+# 4. Có partner/channel columns → Suggest partner analysis
+partner_cols = [col for col in df.columns if any(x in col.lower() for x in ['partner', 'kênh', 'channel', 'đối tác'])]
+if partner_cols:
+    suggestions.append(f"Partner/Channel contribution analysis")
+
+# 5. ALWAYS suggest: Data quality check
+suggestions.append("Data quality check (missing, duplicates, anomalies)")
+```
+
+**User Response Handling**:
+```
+IF user reply "1" hoặc "yes" hoặc "ok" hoặc "làm theo khuyến nghị":
+  → Proceed với recommendation (thường là comprehensive)
+  → Confirm: "OK, tao sẽ làm [recommendation]"
+
+IF user chọn specific options (VD: "2,3" hoặc "chỉ làm 1"):
+  → Parse selections → Proceed với chỉ những options đó
+  → Confirm: "OK, tao sẽ focus vào [selected options]"
+
+IF user tự mô tả (VD: "phân tích xu hướng Bảo Việt"):
+  → Parse mô tả → map to analysis type
+  → Confirm với user: "Tao hiểu là mày muốn [X], đúng không?"
+  → Wait for confirmation
+
+IF user nói "làm hết" hoặc "full analysis" hoặc "all":
+  → Comprehensive (tất cả suggestions)
+
+IF user unclear hoặc vague:
+  → Default to recommendation
+  → Inform: "Tao sẽ làm theo khuyến nghị: [recommendation]"
+```
+
+**Smart Defaults** (để workflow trơn tru):
+```
+LUÔN ƯU TIÊN: User chỉ cần 1 từ để proceed
+- "yes" / "1" / "ok" → Làm theo recommendation
+- "2" / "1,2,3" → Làm specific options
+- "all" / "hết" → Làm tất cả
+
+KHÔNG YÊU CẦU: User viết câu dài
+→ Giảm friction, tăng tốc độ workflow
+```
+
+**Questions Agent CÓ THỂ Hỏi Thêm** (TỐI ĐA 2-3 câu):
+```
+1. Metric chính mày quan tâm nhất? (revenue, quantity, margin, etc.)
+2. Có target/threshold nào cần so sánh không? (VD: target 100M/tháng)
+3. Output: Chỉ charts, hay charts + insights + recommendations?
 ```
 
 **Decision Point**:
 ```
-IF user unclear → Ask 2-3 clarifying questions MAX
-IF user very clear → Proceed to Phase 1
+IF user response RÕ RÀNG:
+  → Proceed to Phase 1
+
+IF user still unclear:
+  → Default to "Comprehensive analysis" (làm hết)
+  → Proceed to Phase 1
 ```
 
-### Step 0.2: Create Project Structure
+### Step 0.3: Create Project Structure
 **Actions**:
 ```bash
 mkdir -p [project_name]/{code,charts,document,statics/{code,charts,document}}
@@ -50,6 +234,23 @@ mkdir -p [project_name]/{code,charts,document,statics/{code,charts,document}}
 **Logging**:
 ```
 ✅ Created project structure at: [path]
+```
+
+---
+
+**SUMMARY PHASE 0**:
+```
+Quy trình:
+1. Đọc nhanh file (peek) → Hiểu cấu trúc
+2. Gợi ý 3-5 phân tích phù hợp dựa vào data
+3. User chọn hoặc mô tả → Confirm
+4. Tạo project structure → Proceed
+
+Lợi ích:
+✓ AI chủ động gợi ý (không hỏi mù quáng)
+✓ User hiểu rõ options
+✓ Workflow trơn tru, không rườm rà
+✓ Tối đa 2-3 câu hỏi clarifying
 ```
 
 ---
@@ -358,6 +559,32 @@ PALETTE_SEQUENTIAL = ['#E8EAF6', '#C5CAE9', '#9FA8DA', '#7986CB', '#5C6BC0', '#3
 PALETTE_DIVERGING = ['#E57373', '#FFCC80', '#FFF9C4', '#C5E1A5', '#81C784', '#66BB6A']  # Red to green
 PALETTE_CATEGORICAL = ['#7986CB', '#81C784', '#FFB74D', '#E57373', '#64B5F6', '#A1887F']  # Distinct muted colors
 
+# =============================================================================
+# AESTHETIC DEFAULTS - Modern Minimalist (EDA Charts)
+# =============================================================================
+# LƯU Ý: EDA charts thường phức tạp hơn business charts (nhiều data points)
+#        → Được phép dùng màu sắc có ý nghĩa (outliers=red, etc.)
+#        → NHƯNG vẫn ưu tiên mảnh, tinh tế, minimal
+#
+# TRIẾT LÝ:
+# - Tối giản, hiện đại (kiểu shadcn/Vercel/React)
+# - Màu sắc có ý nghĩa (red=outliers, green=positive, NOT random colors)
+# - Mảnh, thanh thoát (line 0.5-2px, marker 6-8px, border 0.5-1px)
+# - Grid subtle khi cần (alpha 0.1-0.2, KHÔNG 0.3+)
+#
+# MÀU SẮC CHO EDA:
+# - Boxplot: Muted blue (#7986CB), outliers muted red (#E57373)
+# - Histogram: Muted colors với thin dark edges
+# - Correlation: Diverging palette (muted red to muted green)
+# - Line charts: Black/dark (#000000, #2C3E50), width 1.5-2px
+# - Violin: Soft pastels với thin edges (0.5-1px)
+#
+# DECORATION CHO EDA:
+# - Grid: Alpha 0.1-0.2 (nhẹ, subtle) hoặc OFF cho simple charts
+# - Spines: #E0E0E0, width 0.5-1px (mảnh)
+# - Line width: 0.5-2px (KHÔNG 3px+, quá thô)
+# - Marker size: 6-8px (KHÔNG 10px+, quá to)
+
 # CRITICAL: Chart Design Philosophy - "Less is More"
 # =====================================================
 # NGUYÊN TẮC NỀN TẢNG: Biểu đồ phải thể hiện INSIGHTS, không phải decoration
@@ -369,79 +596,97 @@ PALETTE_CATEGORICAL = ['#7986CB', '#81C784', '#FFB74D', '#E57373', '#64B5F6', '#
 # ---------------------------------
 # Quy tắc: Ít data points → Ít decoration
 #
-# 1-2 data points (VD: So sánh 2 năm, 1 metric):
+# 1-2 data points (HIẾM trong EDA):
 #    → TUYỆT ĐỐI TỐI GIẢN
-#    → KHÔNG grid, KHÔNG viền thừa, KHÔNG background color
-#    → Chỉ data + labels + title
-#    → Màu: 1-2 màu MAX, highlight data chính
-#    → Nét mảnh, elegant
-#    → Example: Bar chart 2 cột → Chỉ 2 bars + số liệu
+#    → KHÔNG grid, KHÔNG viền thừa
+#    → Màu: White/black/light gray ONLY
+#    → Nét mảnh (0.5-2px), elegant
 #
 # 3-5 data points:
 #    → Minimal decoration
-#    → Grid chỉ khi CẦN THIẾT để đọc giá trị
-#    → Màu: Đơn sắc + 1 accent cho highlight
+#    → Grid OFF (trừ khi thực sự cần đọc giá trị)
+#    → Màu: Muted tones, ít màu (2-3 colors max)
+#    → Line width: 1-2px
 #
-# 6+ data points hoặc complex (VD: Time series, correlation matrix):
-#    → Được phép decoration hỗ trợ
-#    → Grid subtle (alpha=0.3)
-#    → Màu: Palette có ý nghĩa (red=negative, green=positive)
+# 6+ data points (PHỔ BIẾN trong EDA - boxplot, histogram, time series):
+#    → Decoration CÓ THỂ nhưng subtle
+#    → Grid alpha 0.1-0.2 (KHÔNG dùng 0.3+, quá đậm)
+#    → Màu: Palette có ý nghĩa (red=negative/outliers, green=positive)
+#    → Line width: 1-2px (KHÔNG 3px+)
+#    → Border: 0.5-1px (mảnh)
 #
 # B. COLOR HIERARCHY - Màu phải có mục đích
 # ------------------------------------------
 # Quy tắc: "Color attracts attention. Use it wisely."
 #
-# Data chính (cần nhấn mạnh):
-#    → Màu đậm, saturated: accent (#7986CB), danger (#E57373)
-#    → VD: Bảo Việt revenue trong comparison → dùng accent
+# Data chính (focus):
+#    → Muted accent colors: #7986CB (soft indigo), #81C784 (muted green)
+#    → KHÔNG dùng bright/saturated colors (quá loè)
 #
-# Data phụ (context):
-#    → Màu nhạt, muted: neutral (#B0BEC5), secondary (#546E7A)
-#    → VD: Total PHI revenue (để so sánh) → dùng neutral
+# Outliers/Warnings:
+#    → Muted red (#E57373) - KHÔNG pure red
 #
-# Background elements (grid, borders):
-#    → Màu RẤT nhạt, alpha thấp
-#    → KHÔNG được chiếm spotlight
+# Positive trends:
+#    → Muted green (#81C784) - KHÔNG bright green
+#
+# Background elements (grid, borders, spines):
+#    → RẤT nhạt (#E0E0E0, #B0BEC5)
+#    → Alpha thấp (0.1-0.2)
+#    → Width mảnh (0.5-1px)
 #
 # C. CRITICAL: Chart Scale Best Practices
 # ----------------------------------------
 # 1. PERCENTAGE CHARTS: ALWAYS 0-100% scale
-#    - Biểu đồ % PHẢI chạy từ 0-100%, KHÔNG crop
-#    - Ví dụ: Nếu data là 27%, y-axis phải 0-100, KHÔNG phải 0-30
-#    - Lý do: Tránh misleading visualization, giữ context đúng
+#    - Biểu đồ % PHẢI chạy từ 0-100%, KHÔNG BAO GIỜ crop
+#    - Ví dụ: CV 27% → y-axis 0-100%, KHÔNG 0-30%
+#    - Lý do: Tránh misleading visualization
 #
 # 2. ABSOLUTE VALUES: Start from 0 (unless negative values exist)
 #    - Revenue, counts → start from 0
 #    - Growth rates (có thể âm) → include 0 trong range
 #
-# 3. Y-AXIS BUFFER: Thêm 10-15% padding phía trên max value
-#    - Để value labels không bị crop
+# 3. Y-AXIS BUFFER: Thêm 10-15% padding
 #    - ax.set_ylim(0, max_value * 1.15)
+#    - Để value labels không bị crop
 #
-# 4. GRIDLINES: Subtle, không dominant
-#    - alpha=0.3, linestyle='--'
-#    - 1-2 data points: KHÔNG DÙNG grid
-#    - 3-5 data points: Grid chỉ khi cần đọc giá trị chính xác
-#    - 6+ data points: Grid được phép, nhưng subtle
+# 4. GRIDLINES: Subtle, KHÔNG dominant
+#    - Alpha: 0.1-0.2 (KHÔNG dùng 0.3+, quá đậm)
+#    - Linestyle: '--' hoặc ':'
+#    - Width: 0.5-0.8px (mảnh)
+#    - 1-2 points: OFF
+#    - 3-5 points: OFF (trừ khi cần)
+#    - 6+ points: Subtle (alpha 0.1-0.2)
 #
 # D. VISUAL HIERARCHY - Thứ tự ưu tiên
 # -------------------------------------
 # 1. DATA (bars, lines, points) - Đậm nhất, rõ nhất
-# 2. VALUE LABELS - Chữ đậm, gần data
+# 2. VALUE LABELS - Gần data, clear
 # 3. AXES LABELS & TITLE - Medium weight
-# 4. GRID & BORDERS - Nhạt nhất, alpha thấp
-# 5. BACKGROUND - Transparent hoặc off-white nhẹ
+# 4. GRID & BORDERS - RẤT nhạt, alpha 0.1-0.2
+# 5. BACKGROUND - White hoặc off-white (#FAFAFA)
 #
-# E. EXAMPLES - Anti-patterns vs Good patterns
+# E. MODERN AESTHETIC - Thin & Elegant
+# -------------------------------------
+# - Line width: 0.5-2px (KHÔNG 3px+, quá thô)
+# - Marker size: 6-8px (KHÔNG 10px+, quá to)
+# - Borders: 0.5-1px (thanh thoát)
+# - Grid alpha: 0.1-0.2 (KHÔNG 0.3+, quá đậm)
+# - Spines: Light gray (#E0E0E0), thin (0.5-1px)
+# - Colors: Muted tones (soft pastels, KHÔNG bright/saturated)
+#
+# F. EXAMPLES - Anti-patterns vs Good patterns
 # ---------------------------------------------
-# ❌ BAD: 2 bars + thick grid + heavy borders + colorful background + 5 colors
-# ✅ GOOD: 2 bars (1 accent, 1 neutral) + clean background + value labels only
+# ❌ BAD: Boxplot + bright blue + thick borders 2px + grid alpha 0.5
+# ✅ GOOD: Boxplot + muted blue (#7986CB) + thin borders 0.8px + grid alpha 0.15
 #
-# ❌ BAD: Line chart 3 years + rainbow colors + thick lines + busy legend
-# ✅ GOOD: Line chart 3 years + 1 color + thin line + minimal legend
+# ❌ BAD: Histogram + rainbow colors + thick edges 2px + busy background
+# ✅ GOOD: Histogram + muted green (#81C784) + thin edges 0.8px + white background
 #
-# ❌ BAD: Percentage chart cropped 0-30% + misleading scale
-# ✅ GOOD: Percentage chart 0-100% + reference lines + clear context
+# ❌ BAD: Line chart width 3.5px + marker 12px + grid alpha 0.4
+# ✅ GOOD: Line chart width 1.5-2px + marker 6-8px + grid alpha 0.15 or OFF
+#
+# ❌ BAD: Percentage cropped 0-30% + misleading
+# ✅ GOOD: Percentage 0-100% + clear context
 
 # Cell 2: Load Data
 BASE_DIR = Path.cwd().parent.parent.parent.parent.parent

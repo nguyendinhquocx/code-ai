@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(cat:*)",
+      "Bash(python:*)",
+      "Bash(openspec list:*)",
+      "Bash(mkdir:*)",
+      "Bash(openspec validate:*)",
+      "Bash(openspec show:*)",
+      "Bash(tree:*)",
+      "Bash(chcp 65001)",
+      "Bash(cmd /c \"dir /B /AD d:\\pcloud\\workspace\\code\\python\\hmsg\")",
+      "Bash(cmd /c \"chcp 65001 && python \"\"d:\\pcloud\\workspace\\code\\python\\hmsg\\ipynb\\total\\plan 2026 hmsg\\code\\analysis.py\"\"\")",
+      "Bash(cmd /c \"set PYTHONIOENCODING=utf-8 && python \"\"d:\\pcloud\\workspace\\code\\python\\hmsg\\ipynb\\total\\plan 2026 hmsg\\code\\analysis.py\"\"\")",
+      "Bash(powershell -Command \"& {$env:PYTHONIOENCODING=''utf-8''; python ''d:\\pcloud\\workspace\\code\\python\\hmsg\\ipynb\\total\\plan 2026 hmsg\\code\\analysis.py''}\")",
+      "Bash(del:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

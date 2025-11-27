@@ -30,10 +30,11 @@ Playbook này định nghĩa **QUY TRÌNH CHUẨN** để phân tích dữ liệ
 - ✅ **Exploratory Data Analysis (EDA)** - Tạo statics module đầy đủ
 - ✅ **Descriptive statistics** - CV, outliers, correlation, distribution
 - ✅ **Business metrics analysis** - Tạo analysis code editable
-- ✅ Visualization (7 EDA charts + 3-5 business charts)
+- ✅ Visualization (7 EDA charts + business charts linh động theo project complexity)
 - ✅ Insights generation (10,000+ words, comprehensive)
 - ✅ Documentation (README cho statics module)
 - ✅ **Code Quality** - Tiếng Việt, comments rõ ràng, có thể đọc hiểu
+- ✅ **Data Consistency** - Số liệu trong slides/insights PHẢI khớp với charts
 - ❌ NOT included: Machine Learning, Predictive Modeling
 
 ### Prerequisites
@@ -50,12 +51,13 @@ openpyxl >= 3.0.0  # for Excel
 ### Success Criteria
 - [ ] Data validated (no critical errors)
 - [ ] **Statics module created** (`statics/code/eda.ipynb` + `generate_charts.py` + README)
-- [ ] **Business code created** (`code/analysis.py` + `analysis.ipynb`)
+- [ ] **Business code created** (`code/analysis.py` hoặc `analysis.ipynb` tùy project)
 - [ ] EDA completed (7 charts generated in `statics/charts_eda/`)
 - [ ] Business analysis done (metrics calculated, saved to `document/metrics.json`)
-- [ ] Business charts created (3-5 targeted charts in `charts/`)
+- [ ] Business charts created (số lượng linh động theo project complexity - xem Phase 5)
 - [ ] Insights documented (`document/insights.md`, 10,000+ words)
-- [ ] Charts & stats match insights (CONSISTENCY validated)
+- [ ] **Slide guidance generated** (`document/slide.md`, số slides linh động theo presentation needs)
+- [ ] **Data consistency validated** - Số liệu trong slides/insights KHỚP với charts/metrics.json
 - [ ] **All code is EDITABLE** (có thể đọc hiểu và tinh chỉnh khi data thay đổi)
 
 ---
@@ -75,6 +77,7 @@ Khi bắt đầu project mới, tạo cấu trúc:
 │   └── ...
 ├── document/
 │   ├── insights.md              # ⭐ INSIGHTS CHÍNH (11,000+ words)
+│   ├── slide.md                 # ⭐ SLIDE GUIDANCE (8-10 slide structure)
 │   ├── metrics.json             # Business metrics output
 │   ├── summary_by_year.csv      # Summary stats
 │   └── README.md                # Project overview
@@ -96,15 +99,15 @@ Khi bắt đầu project mới, tạo cấu trúc:
 ```
 
 **Key Points**:
-- **`code/`**: Business analysis code (BOTH .py script và .ipynb notebook)
+- **`code/`**: Business analysis code (.py script hoặc .ipynb notebook tùy project)
 - **`statics/`**: Phần thống kê EDA đầy đủ (BOTH notebook và script)
-- **`charts/`**: Business charts (3-5 charts targeted)
+- **`charts/`**: Business charts (số lượng linh động: 5-25+ tùy complexity)
 - **`charts_eda/`**: Statistical charts (7 standard EDA charts)
 - **All code MUST be EDITABLE** (có thể đọc hiểu, tinh chỉnh khi data thay đổi)
 
 **Lưu ý**:
 - Thư mục `[project_name]` sẽ khác nhau mỗi project (vd: "plan 2026", "2025 11 blvp analysis")
-- LUÔN tạo CẢ notebook (.ipynb) VÀ script (.py) để linh hoạt sử dụng
+- Tạo .py HOẶC .ipynb tùy nhu cầu (không bắt buộc cả 2)
 
 ---
 
@@ -172,9 +175,16 @@ graph TD
    - Real examples và case studies
    - Integration với Speckit và OpenSpec
 
+8. **Review & Refinement** -
+[`workflow-analytics-review.md`](workflow-analytics-review.md)     
+   - Phase 9: User review sau khi Agent hoàn thành
+   - Format báo lỗi chuẩn
+   - Quy trình fix và verify
+   
+
 ### 🎯 Lợi ích của cấu trúc này:
 
-1. **Dễ đọc**: Thay vì 1 file 1700+ dòng, có 8 file nhỏ hơn (95-485 dòng)
+1. **Dễ đọc**: Thay vì 1 file 1700+ dòng, có 9 file nhỏ hơn (95-485 dòng)
 2. **Dễ điều hướng**: Mỗi file tập trung vào 1-2 khía cạnh
 3. **Tối ưu cho Agent**: Dễ tìm kiếm và truy cập thông tin cần thiết
 4. **Flexible**: Có thể cập nhật từng phần riêng biệt
