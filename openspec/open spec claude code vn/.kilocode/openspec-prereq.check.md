@@ -13,13 +13,29 @@ Kiểm tra tất cả external services/resources cần thiết cho project và 
 ```
 Analyzing OpenSpec project...
 
-[Load detection rules: d:\pcloud\workspace\code\ai\prerequisites\templates\detection-rules.yaml]
+Checking prerequisites framework...
 
-[Scan sources]:
-- openspec/changes/*.md (pending proposals)
-- openspec/specs/*.md (current specs)
-- .env.local (configured resources)
-- config/prerequisites.yaml (tracked status)
+[IF framework không tìm thấy tại prerequisites/]:
+  Prerequisites framework not found.
+
+  Commands /prereq.* require framework.
+
+  Options:
+  (1) Setup framework (see docs)
+  (2) Exit
+
+  [Exit command]
+
+[IF framework found]:
+  ✓ Framework detected
+
+  [Load detection rules: prerequisites/templates/detection-rules.yaml]
+
+  [Scan sources]:
+  - openspec/changes/*.md (pending proposals)
+  - openspec/specs/*.md (current specs)
+  - .env.local (configured resources)
+  - config/prerequisites.yaml (tracked status)
 ```
 
 ### 2. Parse & Match

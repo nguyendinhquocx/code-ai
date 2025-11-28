@@ -19,10 +19,24 @@ Với mô tả tính năng đó, làm như sau:
 0. **PHASE -1: Pre-requisites Discovery** (QUAN TRỌNG - Chạy trước tất cả):
 
    a. **Phân tích mô tả tính năng** để detect external dependencies:
-      - Load file: `d:\pcloud\workspace\code\ai\prerequisites\templates\detection-rules.yaml`
+      - Load detection rules từ prerequisites framework
+      - Path: Find `prerequisites/templates/detection-rules.yaml` relative to workspace root
       - Parse user input tìm keywords: "supabase", "openai", "stripe", "firebase", "mongodb", "api", "database", "payment", v.v.
       - Match keywords với patterns trong detection rules
       - Identify services cần thiết (required vs optional)
+
+      **Framework check**: Nếu prerequisites framework không tìm thấy:
+      ```
+      Prerequisites framework not found.
+
+      Phase -1 requires framework at: prerequisites/
+
+      Options:
+      (1) Skip Phase -1 (proceed without resource check)
+      (2) Setup framework (see docs)
+
+      Continue without Phase -1? [Y/n]
+      ```
 
    b. **Nếu KHÔNG detect services nào**:
       - Skip Phase -1
@@ -66,7 +80,7 @@ Với mô tả tính năng đó, làm như sau:
       **Bước 2: Xử lý user response**
 
       IF user gõ "guide [service]":
-      - Load file: `d:\pcloud\workspace\code\ai\prerequisites\guides\[service]-setup.md`
+      - Load guide: `prerequisites/guides/[service]-setup.md`
       - Display toàn bộ guide (step-by-step, chi tiết)
       - Đợi user complete setup
       - Sau đó tiếp tục collect resources
@@ -119,6 +133,28 @@ Với mô tả tính năng đó, làm như sau:
                 validated: true
                 validated_at: "[timestamp]"
         ```
+
+      **SECURITY CHECK: .gitignore validation**
+
+      Kiểm tra .gitignore:
+      ```
+      Verifying .gitignore...
+
+      [IF .gitignore missing .env.local]:
+        WARNING: .env.local not in .gitignore!
+
+        Risk: Secrets có thể bị commit lên git
+
+        Action needed:
+        Add to .gitignore:
+          .env.local
+          config/prerequisites.yaml
+
+        Continue anyway? [Y/n]
+
+      [IF .env.local in .gitignore]:
+        ✓ .env.local properly ignored
+      ```
 
       **Bước 5: Auto-setup** (nếu service hỗ trợ):
 

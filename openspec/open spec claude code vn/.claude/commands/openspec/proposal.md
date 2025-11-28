@@ -16,9 +16,23 @@ tags: [openspec, change]
 0. **PHASE -1: Pre-requisites Discovery** (QUAN TRỌNG - Chạy trước tất cả):
 
    a. **Phân tích mô tả thay đổi** để detect external dependencies:
-      - Load file: `d:\pcloud\workspace\code\ai\prerequisites\templates\detection-rules.yaml`
+      - Load detection rules từ prerequisites framework
+      - Path: Find `prerequisites/templates/detection-rules.yaml` relative to workspace root
       - Parse user input tìm keywords: "supabase", "openai", "stripe", "database", "api", "auth", etc.
       - Match với services trong detection rules
+
+      **Framework check**: Nếu prerequisites framework không tìm thấy:
+      ```
+      Prerequisites framework not found.
+
+      Phase -1 requires framework at: prerequisites/
+
+      Options:
+      (1) Skip Phase -1 (proceed without resource check)
+      (2) Setup framework (see docs)
+
+      Continue without Phase -1? [Y/n]
+      ```
 
    b. **Nếu KHÔNG detect services nào**:
       - Skip Phase -1 (silent - không thông báo gì)
@@ -72,7 +86,7 @@ tags: [openspec, change]
 
       IF n:
         Guide setup chi tiết:
-        [Load: d:\pcloud\workspace\code\ai\prerequisites\guides\[service]-setup.md]
+        [Load guide: prerequisites/guides/[service]-setup.md]
         [Display full guide]
 
         Sau khi setup xong, paste keys:
@@ -105,6 +119,24 @@ tags: [openspec, change]
       - config/prerequisites.yaml
 
       [Service]: READY
+
+      SECURITY CHECK:
+      Verifying .gitignore...
+
+      [IF .gitignore missing .env.local]:
+        WARNING: .env.local not in .gitignore!
+
+        Risk: Secrets có thể bị commit lên git
+
+        Action needed:
+        Add to .gitignore:
+          .env.local
+          config/prerequisites.yaml
+
+        Continue anyway? [Y/n]
+
+      [IF .env.local in .gitignore]:
+        ✓ .env.local properly ignored
       ```
 
       **c.3. Summary:**

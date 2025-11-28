@@ -1,198 +1,295 @@
 ---
-description: Kiểm tra resources cần thiết cho project hiện tại
+description: Kiểm tra resources cần thiết cho project OpenSpec
 ---
 
 ## Mục đích
 
-Phân tích project và detect resources/services cần thiết, kiểm tra trạng thái sẵn sàng.
+Kiểm tra tất cả external services/resources cần thiết cho project và report trạng thái hiện tại.
 
 ## Flow
 
-### 1. Phân tích Project
+### 1. Detect Services
 
-Đọc files trong project:
-- `package.json` / `requirements.txt` - Dependencies
-- `.env.example` - Expected environment variables
-- `README.md` - Setup instructions
-- `config/prerequisites.yaml` - Trạng thái resources (nếu có)
-- Source code - Import statements, API calls
-
-### 2. Detect Services
-
-Load detection rules:
 ```
-File: d:\pcloud\workspace\code\ai\prerequisites\templates\detection-rules.yaml
-```
+Analyzing OpenSpec project...
 
-Match patterns:
-- Dependencies trong package files
-- Environment variables
-- API endpoints trong code
-- Database connections
-- Third-party service mentions
+Checking prerequisites framework...
 
-### 3. Kiểm tra Trạng thái
+[IF framework không tìm thấy tại prerequisites/]:
+  Prerequisites framework not found.
 
-For each detected service:
-
-**Nếu có `config/prerequisites.yaml`**:
-- Load status từ file
-- Kiểm tra resources đã configured chưa
-- Validate lại nếu cần
-
-**Nếu không có config**:
-- Check `.env.local` có keys không
-- Detect từ environment variables
-- Mark as "chưa cấu hình" nếu thiếu
-
-### 4. Report Kết quả
-
-```markdown
-KIỂM TRA RESOURCES: [Project Name]
-
-## Trạng thái Tổng quan
-
-Đã cấu hình: [X/Y services]
-Thiếu: [Z services]
-Sẵn sàng: [YES/NO]
-
----
-
-## Chi tiết Services
-
-### [Service Name] - [BẮT BUỘC/TÙY CHỌN]
-
-Trạng thái: [Đã cấu hình/Thiếu/Lỗi]
-
-Resources:
-- [RESOURCE_KEY]: [Có/Thiếu/Lỗi format]
-  Validated: [Ngày giờ hoặc "Chưa validate"]
-  Connection: [OK/FAIL với details]
-
-Nếu thiếu:
-  Action: Chạy `/prereq.setup` để cấu hình
-  Hoặc: Gõ "guide [service]" để xem hướng dẫn
-
----
-
-### [Another Service]
-...
-
----
-
-## Hành động Tiếp theo
-
-[Nếu tất cả OK]:
-  Tất cả resources sẵn sàng
-  Có thể bắt đầu development
-
-[Nếu thiếu resources]:
-  Cần setup [X] services
+  Commands /prereq.* require framework.
 
   Options:
-  (1) /prereq.setup - Setup interactively
-  (2) guide [service] - Xem hướng dẫn chi tiết
-  (3) /prereq.validate - Re-validate existing resources
+  (1) Setup framework (see docs)
+  (2) Exit
 
-[Nếu có lỗi validation]:
-  Resources sau cần fix:
-  - [Service]: [Error message]
+  [Exit command]
 
-  Chạy /prereq.validate để kiểm tra lại
+[IF framework found]:
+  ✓ Framework detected
+
+  [Load detection rules: prerequisites/templates/detection-rules.yaml]
+
+  [Scan sources]:
+  - openspec/changes/*.md (pending proposals)
+  - openspec/specs/*.md (current specs)
+  - .env.local (configured resources)
+  - config/prerequisites.yaml (tracked status)
 ```
 
-## Special Cases
-
-### Project chưa có dependencies
-```
-Project không detect services bên ngoài.
-
-Đây là project thuần local hoặc chưa có dependencies.
-Không cần Phase -1 Pre-requisites.
-```
-
-### Resources đã có nhưng outdated
-```
-Phát hiện resources đã cấu hình nhưng lâu rồi:
-- [Service]: Validated [X days ago]
-
-Muốn validate lại? [Y/n]
-```
-
-### Multiple environments detected
-```
-Phát hiện nhiều env files:
-- .env.local (development)
-- .env.production (production)
-
-Check environment nào? [local/production/all]
-```
-
-## Output Files
-
-Command này KHÔNG tạo/sửa files, chỉ READ và REPORT.
-
-## Example Output
+### 2. Parse & Match
 
 ```
-KIỂM TRA RESOURCES: Chat App
+Detected keywords:
+- "supabase" → Supabase service
+- "openai" → OpenAI API service
+- [more matches...]
 
-## Trạng thái Tổng quan
+Matched services:
+- Supabase (database + realtime)
+- OpenAI (AI API)
+```
 
-Đã cấu hình: 1/2 services
-Thiếu: 1 service
-Sẵn sàng: KHÔNG
+### 3. Check Status
+
+For each service:
+
+```
+Checking [Service]...
+
+Resources required:
+- [KEY_1]: [Description]
+- [KEY_2]: [Description]
+
+Status:
+[KEY_1]: ✓ Found (validated 2025-11-27 14:30)
+[KEY_2]: ✗ Missing
+
+Service status: INCOMPLETE
+```
+
+### 4. Report
+
+```markdown
+RESOURCES CHECK REPORT
+
+Project: [Name từ openspec/project.md]
+Checked: [Timestamp]
 
 ---
 
-## Chi tiết Services
+## Tổng quan
 
-### Supabase - BẮT BUỘC
+Total services: [X]
+Ready: [Y]
+Incomplete: [Z]
+Not configured: [W]
 
-Trạng thái: Đã cấu hình
-
-Resources:
-- SUPABASE_URL: Có
-  Validated: 2025-11-27 20:30:00
-  Connection: OK (200)
-
-- SUPABASE_ANON_KEY: Có
-  Validated: 2025-11-27 20:30:00
-  Connection: OK
-
-Location: .env.local, config/prerequisites.yaml
+Overall status: [READY/INCOMPLETE/NOT_READY]
 
 ---
 
-### OpenAI - TÙY CHỌN
+## Chi tiết
 
-Trạng thái: Thiếu
+### [Service 1] - READY
+
+All resources configured và validated
 
 Resources:
-- OPENAI_API_KEY: Thiếu
+- [KEY_1]: ✓ (validated [timestamp])
+- [KEY_2]: ✓ (validated [timestamp])
 
-Lý do cần: AI-powered chat features
+Last check: [timestamp]
+Status: HEALTHY
+
+---
+
+### [Service 2] - INCOMPLETE
+
+Thiếu một số resources
+
+Resources:
+- [KEY_1]: ✓
+- [KEY_2]: ✗ Missing
+
+Action needed:
+  Chạy /prereq.setup để configure thiếu resources
+  Hoặc /prereq.guide [service] để xem hướng dẫn
+
+---
+
+### [Service 3] - NOT CONFIGURED
+
+Chưa setup
+
+Resources needed:
+- [KEY_1]
+- [KEY_2]
+
+Estimated setup time: ~[X] phút
 
 Action:
-  Chạy `/prereq.setup` để cấu hình
-  Hoặc gõ "guide openai"
-  Hoặc skip nếu không cần AI features
+  Run /prereq.setup để bắt đầu setup
+  Hoặc /prereq.guide [service] để xem guide trước
 
 ---
 
-## Hành động Tiếp theo
+## Actions Required
 
-Cần setup OpenAI (optional).
+[Nếu tất cả READY]:
+  Tất cả resources sẵn sàng
 
-Options:
-(1) /prereq.setup - Setup OpenAI ngay
-(2) Skip - Bỏ qua, làm sau
-(3) Continue - Tiếp tục development (AI features sẽ disabled)
+  Có thể proceed với:
+  - /openspec proposal (tạo proposal mới)
+  - /openspec apply (triển khai changes)
+
+[Nếu có INCOMPLETE hoặc NOT_READY]:
+  Services cần setup:
+
+  1. [Service]: Missing [keys]
+     → Run: /prereq.setup
+
+  2. [Another service]: Not configured
+     → Run: /prereq.guide [service]
+
+  Hoặc setup tất cả:
+    /prereq.setup
+
+---
+
+## Next Steps
+
+Mày muốn:
+(1) Setup missing resources (/prereq.setup)
+(2) Xem guide cụ thể (/prereq.guide [service])
+(3) Validate lại (/prereq.validate)
+(4) Continue without setup (một số features có thể không work)
+
+Chọn: [1/2/3/4]
+```
+
+## Detection Sources
+
+### From Changes (proposals)
+```
+Scan: openspec/changes/*/proposal.md
+Scan: openspec/changes/*/specs/*/spec.md
+
+Tìm keywords trong:
+- "Tại sao" section
+- "Cái gì Thay đổi" section
+- Requirements text
+```
+
+### From Specs (current capabilities)
+```
+Scan: openspec/specs/*/spec.md
+
+Tìm keywords trong:
+- Requirement descriptions
+- Scenario descriptions
+```
+
+### From Config
+```
+Read: .env.local (nếu có)
+Read: config/prerequisites.yaml (nếu có)
+
+Load existing resources đã configured
+```
+
+## Output Format
+
+Command này chỉ READ và REPORT, không modify files.
+
+Output:
+- Markdown report
+- Service status list
+- Action recommendations
+- Next steps options
+
+## Use Cases
+
+### Case 1: New project (chưa setup gì)
+```
+Input: /prereq.check
+Output:
+  No services detected
+  No resources configured
+
+  Project có vẻ chưa cần external services.
+
+  Nếu mày cần setup services:
+    /prereq.setup
+```
+
+### Case 2: Project với services (đã setup)
+```
+Input: /prereq.check
+Output:
+  Detected: Supabase, OpenAI
+
+  Supabase: READY (all keys valid)
+  OpenAI: READY (key valid)
+
+  Overall: READY
+
+  Có thể proceed với development.
+```
+
+### Case 3: Incomplete setup
+```
+Input: /prereq.check
+Output:
+  Detected: Supabase, OpenAI
+
+  Supabase: READY
+  OpenAI: NOT CONFIGURED
+
+  Overall: INCOMPLETE
+
+  Action: Setup OpenAI với /prereq.setup
+```
+
+### Case 4: Outdated validation
+```
+Input: /prereq.check
+Output:
+  Detected: Supabase
+
+  Supabase: READY
+    Warning: Last validated 30 days ago
+    Recommend: Re-validate với /prereq.validate
+```
+
+## Special Behaviors
+
+### Auto-scan on command
+```
+Nếu project lớn (nhiều specs/changes):
+
+  Scanning project...
+  [Progress indicator]
+
+  Found [X] specs, [Y] changes
+  Detected [Z] services
+```
+
+### Smart detection
+```
+Nếu detect service nhưng không chắc:
+
+  Possible service: [Service name]
+  Keywords matched: [list]
+  Confidence: [%]
+
+  Confirm detection? [Y/n/skip]
 ```
 
 ## LƯU Ý
 
-- Command này safe, chỉ READ
-- Không modify files
-- Không call external APIs (chỉ validate nếu có flag)
-- Fast execution (< 2 giây)
+- Command này SAFE - chỉ đọc files, không modify
+- Có thể chạy bất cứ lúc nào
+- Không tốn quota (không gọi APIs)
+- Fast execution (< 5 giây cho project nhỏ-medium)
