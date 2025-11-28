@@ -473,110 +473,6 @@ Chỉ thêm độ phức tạp với:
 3. Xem lại archives gần đây
 4. Hỏi để làm rõ
 
-## Phase -1: Pre-requisites Discovery
-
-**QUAN TRỌNG**: Phase -1 chạy TRƯỚC khi tạo proposals để đảm bảo resources sẵn sàng.
-
-### Trigger Rules
-
-Phase -1 tự động activate khi detect keywords trong user request:
-
-**Cloud Services**: supabase, firebase, cloud, realtime
-
-**AI Services**: openai, gpt, chatgpt, anthropic, claude, ai api
-
-**Payment**: stripe, payment, checkout, subscription
-
-**Database**: mongodb, postgres, mysql, database, sql
-
-**Authentication**: auth0, authentication, oauth, jwt
-
-**Storage**: s3, storage, upload, file storage
-
-**Email**: sendgrid, resend, email service, smtp
-
-**Analytics**: analytics, tracking, google analytics
-
-### Commands
-
-**`/prereq.check`**
-Kiểm tra resources cần thiết cho project
-- Scan OpenSpec specs và changes
-- Detect services từ keywords
-- Report trạng thái (có/thiếu/lỗi)
-- Read-only, không modify files
-
-**`/prereq.setup`**
-Interactive setup tất cả resources
-- Guided setup từng service
-- Validation sau mỗi step
-- Tạo .env.local và config files
-- Resume capability nếu interrupt
-
-**`/prereq.validate`**
-Re-validate resources đã configured
-- 3 levels: Quick/Standard/Deep
-- Update validation timestamps
-- Detailed error reporting
-
-**`/prereq.guide [service]`**
-Show setup guide chi tiết
-- List available guides
-- Service aliases support
-- Interactive mode option
-
-### Flow Integration
-
-```
-User: /openspec proposal "Thêm chat realtime với Supabase"
-  ↓
-[Phase -1 auto-detect: Supabase]
-  ↓
-AI: "Cần Supabase resources. Mày có keys chưa?"
-  ↓
-User: "Chưa"
-  ↓
-AI: [Guide setup 5 phút]
-  ↓
-User: [Paste keys]
-  ↓
-AI: [Validate + Store .env.local]
-  ↓
-AI: "Resources ready. Proceeding với proposal generation..."
-  ↓
-[Continue normal OpenSpec workflow]
-```
-
-### Special Cases
-
-**Simple proposals (no deps)**:
-- Phase -1 skip silent
-- Proceed trực tiếp
-
-**Resources already configured**:
-- Quick validation
-- Continue if OK
-
-**User chưa sẵn sàng**:
-- Lưu checkpoint
-- User có thể run `/prereq.setup` later
-- Proposal có thể thiếu resource details
-
-### Dependencies
-
-Phase -1 framework location:
-```
-d:\pcloud\workspace\code\ai\prerequisites/
-├── templates/detection-rules.yaml (15+ services)
-├── guides/
-│   ├── supabase-setup.md
-│   ├── openai-setup.md
-│   └── [more guides...]
-└── examples/
-```
-
----
-
 ## Tham khảo Nhanh
 
 ### Chỉ báo Giai đoạn
@@ -599,15 +495,6 @@ openspec list              # Cái gì đang trong tiến trình?
 openspec show [item]       # Xem chi tiết
 openspec validate --strict # Có đúng không?
 openspec archive <change-id> [--yes|-y]  # Đánh dấu hoàn thành (thêm --yes cho automation)
-```
-
-### Prerequisites Commands
-
-```bash
-/prereq.check              # Kiểm tra resources cần thiết
-/prereq.setup              # Setup interactive tất cả
-/prereq.validate           # Re-validate resources
-/prereq.guide [service]    # Show setup guide
 ```
 
 Nhớ: Specs là sự thật. Changes là đề xuất. Giữ chúng đồng bộ.

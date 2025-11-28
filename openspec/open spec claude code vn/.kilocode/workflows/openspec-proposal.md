@@ -13,6 +13,146 @@ tags: [openspec, change]
 - Xác định bất kỳ chi tiết mơ hồ nào và hỏi thêm câu hỏi cần thiết trước khi chỉnh sửa file.
 
 **Các bước thực hiện**
+0. **PHASE -1: Pre-requisites Discovery** (QUAN TRỌNG - Chạy trước tất cả):
+
+   a. **Phân tích mô tả thay đổi** để detect external dependencies:
+      - Load file: `d:\pcloud\workspace\code\ai\prerequisites\templates\detection-rules.yaml`
+      - Parse user input tìm keywords: "supabase", "openai", "stripe", "database", "api", "auth", etc.
+      - Match với services trong detection rules
+
+   b. **Nếu KHÔNG detect services nào**:
+      - Skip Phase -1 (silent - không thông báo gì)
+      - Proceed trực tiếp bước 1
+
+   c. **Nếu DETECT được services**:
+
+      **c.1. Present checklist:**
+      ```
+      PHASE -1: PRE-REQUISITES DISCOVERY
+
+      Phát hiện proposal cần external services:
+
+      BẮT BUỘC:
+      - [Service 1]: [Resources cần]
+      - [Service 2]: [Resources cần]
+
+      TÙY CHỌN:
+      - [Optional Service]: [Resources cần]
+
+      Thời gian setup estimate: ~[X] phút
+
+      Tiếp tục setup? [Y/skip/later]
+      ```
+
+      **c.2. Interactive setup flow:**
+
+      For each service:
+
+      **Check existing:**
+      ```
+      Checking [Service]...
+
+      [Nếu đã có trong .env.local]:
+        Found: [KEY] (validated [timestamp])
+        Re-validate? [Y/skip] → If Y: validate → continue
+
+      [Nếu chưa có]:
+        Continue setup
+      ```
+
+      **Collect resources:**
+      ```
+      Setup [Service]
+
+      Mày đã có [Service] keys chưa? [Y/n]
+
+      IF Y:
+        Paste theo format:
+        SERVICE_KEY=value
+
+      IF n:
+        Guide setup chi tiết:
+        [Load: d:\pcloud\workspace\code\ai\prerequisites\guides\[service]-setup.md]
+        [Display full guide]
+
+        Sau khi setup xong, paste keys:
+      ```
+
+      **Validate:**
+      ```
+      Validating [Service]...
+
+      Checking [KEY]:
+        Format: [pattern check]
+        Connection: [API test]
+
+      [Nếu OK]: Proceed
+      [Nếu FAIL]:
+        Error: [details]
+
+        Options:
+        (1) Nhập lại
+        (2) Skip (nếu optional)
+        (3) Xem guide lại
+      ```
+
+      **Storage:**
+      ```
+      Saving [Service] configs...
+
+      Created/Updated:
+      - .env.local
+      - config/prerequisites.yaml
+
+      [Service]: READY
+      ```
+
+      **c.3. Summary:**
+      ```
+      PHASE -1 HOÀN THÀNH
+
+      Đã configured:
+      - [Service 1]: READY
+      - [Service 2]: READY
+
+      Skipped:
+      - [Optional Service]: SKIPPED
+
+      Files:
+      - .env.local (gitignored)
+      - config/prerequisites.yaml
+
+      Có thể proceed với proposal generation.
+      ```
+
+   d. **Special cases:**
+
+   - **User chưa sẵn sàng**: Nếu user chọn "later", lưu checkpoint:
+     ```
+     Prerequisites chưa setup.
+
+     Mày có thể:
+     - Continue proposal (resources sẽ cần sau)
+     - Run /prereq.setup khi sẵn sàng
+
+     Note: Proposal có thể thiếu chi tiết về resources.
+     ```
+
+   - **Partial setup**: Nếu user skip một số optional services:
+     ```
+     Một số optional services chưa setup.
+
+     Proposal sẽ note các services available.
+     Có thể add later với /prereq.setup.
+     ```
+
+   - **All ready**: Nếu tất cả services đã có:
+     ```
+     All resources validated: READY
+
+     Proceeding với proposal generation...
+     ```
+
 1. Xem lại `openspec/project.md`, chạy `openspec list` và `openspec list --specs`, kiểm tra code hoặc docs liên quan (ví dụ qua `rg`/`ls`) để làm căn cứ cho đề xuất dựa trên hành vi hiện tại; ghi chú bất kỳ khoảng trống nào cần làm rõ.
 2. Chọn một `change-id` duy nhất bắt đầu bằng động từ và tạo khung `proposal.md`, `tasks.md`, và `design.md` (khi cần) trong `openspec/changes/<id>/`.
 3. Ánh xạ thay đổi thành các capabilities hoặc requirements cụ thể, chia nhỏ các nỗ lực đa phạm vi thành các spec deltas riêng biệt với mối quan hệ và trình tự rõ ràng.

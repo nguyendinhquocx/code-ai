@@ -16,6 +16,185 @@ Văn bản mà user gõ sau `/speckit.specify` trong triggering message **chính
 
 Với mô tả tính năng đó, làm như sau:
 
+0. **PHASE -1: Pre-requisites Discovery** (QUAN TRỌNG - Chạy trước tất cả):
+
+   a. **Phân tích mô tả tính năng** để detect external dependencies:
+      - Load file: `d:\pcloud\workspace\code\ai\prerequisites\templates\detection-rules.yaml`
+      - Parse user input tìm keywords: "supabase", "openai", "stripe", "firebase", "mongodb", "api", "database", "payment", v.v.
+      - Match keywords với patterns trong detection rules
+      - Identify services cần thiết (required vs optional)
+
+   b. **Nếu KHÔNG detect services nào**:
+      - Skip Phase -1
+      - Proceed trực tiếp bước 1 (Generate short name)
+
+   c. **Nếu DETECT được services**:
+
+      **Bước 1: Present Checklist**
+      ```
+      Phát hiện dependencies bên ngoài. Trước khi tạo spec, cần chuẩn bị resources.
+
+      DANH SÁCH RESOURCES CẦN THIẾT: [Tên tính năng]
+
+      Thời gian setup: [tổng thời gian estimate]
+      Chi phí: [FREE/PAY-AS-YOU-GO với details]
+
+      ## BẮT BUỘC
+
+      ### [Service Name]
+      - [ ] [Resource Key] - [Description]
+            Nơi lấy: [Where to get]
+            Format: [Expected format]
+
+      Chưa có [Service]?
+      Gõ "guide [service]" để xem hướng dẫn chi tiết
+
+      ## TÙY CHỌN (có thể bỏ qua)
+
+      ### [Optional Service]
+      - [ ] [Resource Key] - [Description]
+            Lý do: [Why optional]
+
+      ---
+
+      Gõ:
+      - "ready" - Đã có tất cả resources
+      - "guide [service]" - Hướng dẫn setup service
+      - "skip [service]" - Bỏ qua optional service
+      ```
+
+      **Bước 2: Xử lý user response**
+
+      IF user gõ "guide [service]":
+      - Load file: `d:\pcloud\workspace\code\ai\prerequisites\guides\[service]-setup.md`
+      - Display toàn bộ guide (step-by-step, chi tiết)
+      - Đợi user complete setup
+      - Sau đó tiếp tục collect resources
+
+      IF user gõ "skip [service]":
+      - Mark service as skipped
+      - Update checklist
+      - Continue với remaining services
+
+      IF user gõ "ready" HOẶC paste resources:
+      - Collect resource values từ user
+      - Expected format:
+        ```
+        SERVICE_KEY=value
+        ANOTHER_KEY=another_value
+        ```
+
+      **Bước 3: Validation**
+      ```python
+      For each resource:
+        1. Format check (regex pattern từ detection rules)
+        2. Connection test (nếu là URL/API key):
+           - Supabase: GET {url}/rest/v1/ với apikey header
+           - OpenAI: GET https://api.openai.com/v1/models với Bearer token
+           - Etc.
+
+        3. Report kết quả:
+           [Resource Key]:
+             Format: [OK/FAIL với message]
+             Connection: [OK/FAIL với status code]
+      ```
+
+      **Bước 4: Storage**
+      - Tạo file `.env.local` với secrets (nếu chưa có)
+      - Append resources vào `.env.local`:
+        ```bash
+        # [Service Name]
+        # Generated: [timestamp]
+        SERVICE_KEY=value
+        ```
+      - Tạo file `config/prerequisites.yaml` track trạng thái:
+        ```yaml
+        project: "[Feature name]"
+        phase: "completed"
+        services:
+          [service_name]:
+            status: "ready"
+            resources:
+              - key: SERVICE_KEY
+                validated: true
+                validated_at: "[timestamp]"
+        ```
+
+      **Bước 5: Auto-setup** (nếu service hỗ trợ):
+
+      Ví dụ Supabase database tables:
+      ```
+      Phát hiện tính năng cần database tables.
+      Tao có thể tạo tables tự động bằng SQL scripts. OK không? [Y/n]
+
+      IF user: "Y"
+        - Generate SQL từ feature description
+        - Show SQL preview
+        - Execute via Supabase API
+        - Report kết quả
+
+      IF user: "n"
+        - Provide SQL scripts để user tự chạy
+        - Guide: "Vào Supabase Dashboard > SQL Editor > Paste script > Run"
+      ```
+
+      **Bước 6: Confirm Ready**
+      ```
+      PHASE -1 HOÀN THÀNH
+
+      Tóm tắt:
+      [Service]: Đã cấu hình & validate
+      [Optional Service]: Đã bỏ qua
+
+      Files đã tạo:
+      - .env.local (secrets - KHÔNG commit)
+      - config/prerequisites.yaml (trạng thái)
+
+      Sẵn sàng tạo spec? [Y/n]
+      ```
+
+      IF user: "Y" → Proceed bước 1 (Generate short name)
+      IF user: "n" → Ask "Còn thiếu gì?" → Loop lại Phase -1
+
+   d. **Special cases**:
+
+      - Nếu user request đã có `.env.local` và `config/prerequisites.yaml`:
+        ```
+        Phát hiện resources đã có sẵn:
+        [Service]: [Status từ config file]
+
+        Validate lại? [Y/skip]
+        ```
+
+      - Nếu validation fail:
+        ```
+        Validation thất bại:
+        [Resource]: [Error message]
+
+        Options:
+        (1) Nhập lại resource
+        (2) Xem guide setup
+        (3) Bỏ qua (nếu optional)
+        ```
+
+      - Nếu user không có service account:
+        ```
+        Chưa có [Service] account.
+
+        Setup mất ~[time]. Mày muốn:
+        (1) Làm ngay (tao hướng dẫn)
+        (2) Làm sau (pause workflow)
+        (3) Dùng alternative [nếu có]
+        ```
+
+   **LƯU Ý QUAN TRỌNG**:
+   - Phase -1 chạy SILENT cho simple features (không có external deps)
+   - Phase -1 chỉ activate khi thực sự cần thiết
+   - KHÔNG hỏi quá nhiều - tối đa 3 clarifications
+   - Guided setup phải chi tiết, từng bước, dễ follow
+   - Validation phải nhanh (< 5 giây per resource)
+   - Error messages phải actionable (nói rõ phải làm gì tiếp)
+
 1. **Generate một short name ngắn gọn** (2-4 từ) cho branch:
    - Phân tích mô tả tính năng và trích xuất các keywords ý nghĩa nhất
    - Tạo short name 2-4 từ capture được essence của tính năng

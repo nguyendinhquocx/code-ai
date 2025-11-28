@@ -60,6 +60,60 @@ CUỐI CÙNG LÀ KẾT QUẢ TỐT NHẤT CÓ THỂ.
 
 # Workflow
 
+## Phase -1: Pre-requisites Discovery (Chuẩn bị Resources)
+
+**Mục đích**: "Mise en place" - Chuẩn bị đầy đủ nguyên liệu (API keys, database, configs) TRƯỚC KHI bắt đầu implement
+
+**Khi nào trigger**:
+- User mentions external services: Supabase, OpenAI, Stripe, Firebase, MongoDB, etc.
+- Keywords detect: "api", "database", "authentication", "payment", "cloud"
+- Trước khi bắt đầu Phase 0 của bất kỳ workflow nào
+
+**Flow**:
+```
+USER REQUEST
+    ↓
+[Auto-detect external dependencies]
+    ↓
+Phase -1: Pre-requisites Discovery ⭐
+├─ Analyze requirements
+├─ Detect needed resources (load detection-rules.yaml)
+├─ Present interactive checklist
+├─ Guide setup nếu user chưa có
+├─ Validate connections (format + test)
+├─ Store configs (.env.local + prerequisites.yaml)
+└─ Confirm ready ✅
+    ↓
+Phase 0: Setup & Understanding
+    ↓
+Continue workflow...
+```
+
+**Example**:
+```
+User: "Làm app chat với Supabase"
+→ Detect: Supabase service
+→ Phase -1: Check SUPABASE_URL, SUPABASE_ANON_KEY
+→ User chưa có → Guide setup → User complete → Validate → Store
+→ Phase 0: Bắt đầu code ✅
+```
+
+**Files location**: `prerequisites/`
+- `README.md` - Overview & integration guide
+- `templates/` - YAML templates, detection rules
+- `guides/` - Setup guides cho từng service
+- `examples/` - Real-world examples
+
+**Commands**:
+- `/prereq check` - Check requirements
+- `/prereq setup` - Interactive setup
+- `/prereq validate` - Validate existing resources
+- `/prereq guide [service]` - Show setup guide
+
+**Xem chi tiết**: `prerequisites/README.md` và `prerequisites/WORKFLOW_INTEGRATION.md`
+
+---
+
 <!-- OPENSPEC:START -->
 ## Hướng dẫn OpenSpec
 (Nếu Project không có thì bỏ qua)

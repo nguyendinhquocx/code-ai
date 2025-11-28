@@ -64,7 +64,7 @@ CUỐI CÙNG LÀ KẾT QUẢ TỐT NHẤT CÓ THỂ.
 ## Hướng dẫn OpenSpec
 
 Những hướng dẫn này dành cho các trợ lý AI làm việc trong dự án này.
-
+    
 Luôn mở `@/openspec/AGENTS.md` khi yêu cầu:
 - Nhắc đến lập kế hoạch hoặc đề xuất (các từ như proposal, spec, change, plan)
 - Giới thiệu khả năng mới, thay đổi đột phá, chuyển đổi kiến trúc, hoặc công việc lớn về hiệu suất/bảo mật
@@ -78,89 +78,6 @@ Sử dụng `@/openspec/AGENTS.md` để tìm hiểu:
 Giữ khối được quản lý này để 'openspec update' có thể làm mới hướng dẫn.
 
 <!-- OPENSPEC:END -->
-
-## Phase -1: Pre-requisites Discovery
-
-**Tích hợp mới**: OpenSpec workflow giờ có Phase -1 để quản lý external resources.
-
-### Khi nào Phase -1 Trigger
-
-Phase -1 tự động activate TRƯỚC `/openspec proposal` khi detect keywords:
-
-**Services được detect**:
-- Cloud: supabase, firebase, cloud, realtime
-- AI: openai, gpt, anthropic, claude
-- Payment: stripe, payment, checkout
-- Database: mongodb, postgres, mysql, database
-- Auth: auth0, authentication, oauth, jwt
-- Storage: s3, storage, upload
-- Email: sendgrid, resend, email service
-- Analytics: analytics, tracking
-
-### Commands Available
-
-```bash
-/prereq.check              # Kiểm tra resources project cần
-/prereq.setup              # Interactive setup tất cả resources
-/prereq.validate           # Re-validate resources đã configured
-/prereq.guide [service]    # Show setup guide chi tiết
-```
-
-### Workflow Flow
-
-**Trước Phase -1**:
-```
-User: /openspec proposal "Thêm chat với Supabase"
-  ↓
-Generate proposal
-  ↓
-Apply changes
-  ↓
-Run → ERROR: SUPABASE_URL not defined
-```
-
-**Sau Phase -1**:
-```
-User: /openspec proposal "Thêm chat với Supabase"
-  ↓
-[Phase -1 detect: Supabase]
-  ↓
-AI: "Cần Supabase. Mày có keys chưa?"
-  ↓
-User: [Paste keys hoặc request guide]
-  ↓
-AI: [Validate + Store .env.local]
-  ↓
-Generate proposal (realistic, biết resources có)
-  ↓
-Apply changes (code có configs ready)
-  ↓
-Run → Works ngay lần đầu
-```
-
-### Silent Skip
-
-Proposals đơn giản không cần external deps:
-- Phase -1 skip silent
-- Không hỏi user gì thêm
-- Proceed trực tiếp proposal generation
-
-Example:
-```
-User: /openspec proposal "Refactor validation logic"
-  ↓
-[Phase -1 check: No external services detected]
-  ↓
-[Skip Phase -1 silent]
-  ↓
-Proceed proposal generation
-```
-
-### Documentation
-
-- Full framework: `d:\pcloud\workspace\code\ai\prerequisites/`
-- Integration docs: See `openspec/AGENTS.md` (Phase -1 section)
-- Setup guides: `prerequisites/guides/`
 
 
 

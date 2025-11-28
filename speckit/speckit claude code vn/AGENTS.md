@@ -60,6 +60,48 @@ CUỐI CÙNG LÀ KẾT QUẢ TỐT NHẤT CÓ THỂ.
 
 # Workflow
 
+## Phase -1: Pre-requisites Discovery
+
+**BẮT BUỘC đọc trước khi chạy bất kỳ `/speckit.*` command nào**
+
+Khi user request tính năng có external dependencies (Supabase, OpenAI, Stripe, etc.):
+
+1. **Auto-detect** services từ keywords trong mô tả tính năng
+2. **Check resources** cần thiết (API keys, database configs, etc.)
+3. **Interactive setup** nếu user chưa có
+4. **Validate** connections
+5. **Store** configs (.env.local + prerequisites.yaml)
+6. **Confirm ready** → Proceed với spec generation
+
+**Commands**:
+- `/prereq.check` - Kiểm tra resources cần thiết
+- `/prereq.setup` - Setup interactive
+- `/prereq.validate` - Validate lại resources
+- `/prereq.guide [service]` - Xem hướng dẫn setup
+
+**Flow tích hợp**:
+```
+/speckit.specify "Làm app chat với Supabase"
+  ↓
+[Phase -1 auto-trigger]
+  → Detect: Supabase
+  → Check: SUPABASE_URL, SUPABASE_ANON_KEY
+  → Setup nếu thiếu
+  → Validate
+  ↓
+[Generate spec với resources confirmed]
+  ↓
+Continue workflow...
+```
+
+**Xem chi tiết**:
+- Framework: `d:\pcloud\workspace\code\ai\prerequisites\README.md`
+- Integration: `d:\pcloud\workspace\code\ai\prerequisites\WORKFLOW_INTEGRATION.md`
+- Detection rules: `d:\pcloud\workspace\code\ai\prerequisites\templates\detection-rules.yaml`
+- Guides: `d:\pcloud\workspace\code\ai\prerequisites\guides\*.md`
+
+---
+
 <!-- OPENSPEC:START -->
 ## Hướng dẫn OpenSpec
 
