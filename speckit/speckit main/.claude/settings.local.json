@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Read(//d/pcloud/code/ai/experts/.building/**)"
-    ],
-    "deny": [],
-    "ask": []
-  }
-}
