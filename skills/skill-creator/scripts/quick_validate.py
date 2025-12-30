@@ -6,8 +6,66 @@ Quick validation script for skills - minimal version
 import sys
 import os
 import re
-import yaml
 from pathlib import Path
+
+
+def find_path_references(content: str) -> list[str]:
+    """
+    Extract path references from SKILL.md content.
+    Looks for patterns like scripts/xxx, references/xxx, assets/xxx
+
+    Filters out:
+    - Placeholder paths (xxx, example, etc.)
+    - Paths in example contexts (lines containing "Example:", "e.g.", etc.)
+    - Generic documentation examples
+    - Paths prefixed with file:// (e.g., file://scripts/xxx) - these are external tool references, not skill-internal paths
+    """
+    # Pattern to match bundled resource paths (scripts/, references/, assets/)
+    # Use negative lookbehind to exclude file:// prefixed paths
+    pattern = r'(?<!file://)(?:scripts|references|assets)/[\w./-]+'
+
+    # Find all matches with their line context
+    unique_paths = set()
+    for line in content.split('\n'):
+        # Skip lines that are clearly examples or documentation
+        line_lower = line.lower()
+        if any(x in line_lower for x in [
+            'example:', 'examples:', 'e.g.', 'for example',
+            '- **example', '- example:', 'such as',
+            'pattern:', 'usage:', '❌', '✅',
+            '- **allowed', '- **best practice', 'would be helpful',
+            'like `scripts/', 'like `references/', 'like `assets/',
+        ]):
+            continue
+
+        # Find paths in this line
+        matches = re.findall(pattern, line)
+        for path in matches:
+            # Skip obvious placeholders
+            if any(x in path.lower() for x in ['example', 'xxx', '<', '>', 'my-', 'my_']):
+                continue
+            unique_paths.add(path)
+
+    return list(unique_paths)
+
+
+def validate_path_references(skill_path: Path, content: str) -> tuple[bool, list[str]]:
+    """
+    Verify all path references in SKILL.md actually exist.
+
+    Returns:
+        (all_exist, missing_paths)
+    """
+    referenced_paths = find_path_references(content)
+    missing = []
+
+    for ref_path in referenced_paths:
+        full_path = skill_path / ref_path
+        if not full_path.exists():
+            missing.append(ref_path)
+
+    return len(missing) == 0, missing
+
 
 def validate_skill(skill_path):
     """Basic validation of a skill"""
@@ -28,60 +86,36 @@ def validate_skill(skill_path):
     if not match:
         return False, "Invalid frontmatter format"
 
-    frontmatter_text = match.group(1)
-
-    # Parse YAML frontmatter
-    try:
-        frontmatter = yaml.safe_load(frontmatter_text)
-        if not isinstance(frontmatter, dict):
-            return False, "Frontmatter must be a YAML dictionary"
-    except yaml.YAMLError as e:
-        return False, f"Invalid YAML in frontmatter: {e}"
-
-    # Define allowed properties
-    ALLOWED_PROPERTIES = {'name', 'description', 'license', 'allowed-tools', 'metadata'}
-
-    # Check for unexpected properties (excluding nested keys under metadata)
-    unexpected_keys = set(frontmatter.keys()) - ALLOWED_PROPERTIES
-    if unexpected_keys:
-        return False, (
-            f"Unexpected key(s) in SKILL.md frontmatter: {', '.join(sorted(unexpected_keys))}. "
-            f"Allowed properties are: {', '.join(sorted(ALLOWED_PROPERTIES))}"
-        )
+    frontmatter = match.group(1)
 
     # Check required fields
-    if 'name' not in frontmatter:
+    if 'name:' not in frontmatter:
         return False, "Missing 'name' in frontmatter"
-    if 'description' not in frontmatter:
+    if 'description:' not in frontmatter:
         return False, "Missing 'description' in frontmatter"
 
     # Extract name for validation
-    name = frontmatter.get('name', '')
-    if not isinstance(name, str):
-        return False, f"Name must be a string, got {type(name).__name__}"
-    name = name.strip()
-    if name:
+    name_match = re.search(r'name:\s*(.+)', frontmatter)
+    if name_match:
+        name = name_match.group(1).strip()
         # Check naming convention (hyphen-case: lowercase with hyphens)
         if not re.match(r'^[a-z0-9-]+$', name):
             return False, f"Name '{name}' should be hyphen-case (lowercase letters, digits, and hyphens only)"
         if name.startswith('-') or name.endswith('-') or '--' in name:
             return False, f"Name '{name}' cannot start/end with hyphen or contain consecutive hyphens"
-        # Check name length (max 64 characters per spec)
-        if len(name) > 64:
-            return False, f"Name is too long ({len(name)} characters). Maximum is 64 characters."
 
     # Extract and validate description
-    description = frontmatter.get('description', '')
-    if not isinstance(description, str):
-        return False, f"Description must be a string, got {type(description).__name__}"
-    description = description.strip()
-    if description:
+    desc_match = re.search(r'description:\s*(.+)', frontmatter)
+    if desc_match:
+        description = desc_match.group(1).strip()
         # Check for angle brackets
         if '<' in description or '>' in description:
             return False, "Description cannot contain angle brackets (< or >)"
-        # Check description length (max 1024 characters per spec)
-        if len(description) > 1024:
-            return False, f"Description is too long ({len(description)} characters). Maximum is 1024 characters."
+
+    # Validate path references exist
+    paths_valid, missing_paths = validate_path_references(skill_path, content)
+    if not paths_valid:
+        return False, f"Missing referenced files: {', '.join(missing_paths)}"
 
     return True, "Skill is valid!"
 

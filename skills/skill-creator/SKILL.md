@@ -22,28 +22,6 @@ equipped with procedural knowledge that no model can fully possess.
 3. Domain expertise - Company-specific knowledge, schemas, business logic
 4. Bundled resources - Scripts, references, and assets for complex and repetitive tasks
 
-## Core Principles
-
-### Concise is Key
-
-The context window is a public good. Skills share the context window with everything else Claude needs: system prompt, conversation history, other Skills' metadata, and the actual user request.
-
-**Default assumption: Claude is already very smart.** Only add context Claude doesn't already have. Challenge each piece of information: "Does Claude really need this explanation?" and "Does this paragraph justify its token cost?"
-
-Prefer concise examples over verbose explanations.
-
-### Set Appropriate Degrees of Freedom
-
-Match the level of specificity to the task's fragility and variability:
-
-**High freedom (text-based instructions)**: Use when multiple approaches are valid, decisions depend on context, or heuristics guide the approach.
-
-**Medium freedom (pseudocode or scripts with parameters)**: Use when a preferred pattern exists, some variation is acceptable, or configuration affects behavior.
-
-**Low freedom (specific scripts, few parameters)**: Use when operations are fragile and error-prone, consistency is critical, or a specific sequence must be followed.
-
-Think of Claude as exploring a path: a narrow bridge with cliffs needs specific guardrails (low freedom), while an open field allows many routes (high freedom).
-
 ### Anatomy of a Skill
 
 Every skill consists of a required SKILL.md file and optional bundled resources:
@@ -63,10 +41,7 @@ skill-name/
 
 #### SKILL.md (required)
 
-Every SKILL.md consists of:
-
-- **Frontmatter** (YAML): Contains `name` and `description` fields. These are the only fields that Claude reads to determine when the skill gets used, thus it is very important to be clear and comprehensive in describing what the skill is, and when it should be used.
-- **Body** (Markdown): Instructions and guidance for using the skill. Only loaded AFTER the skill triggers (if at all).
+**Metadata Quality:** The `name` and `description` in YAML frontmatter determine when Claude will use the skill. Be specific about what the skill does and when to use it. Use the third-person (e.g. "This skill should be used when..." instead of "Use this skill when...").
 
 #### Bundled Resources (optional)
 
@@ -99,17 +74,27 @@ Files not intended to be loaded into context, but rather used within the output 
 - **Use cases**: Templates, images, icons, boilerplate code, fonts, sample documents that get copied or modified
 - **Benefits**: Separates output resources from documentation, enables Claude to use files without loading them into context
 
-#### What to Not Include in a Skill
+##### Privacy and Path References
 
-A skill should only contain essential files that directly support its functionality. Do NOT create extraneous documentation or auxiliary files, including:
+**CRITICAL**: Skills intended for public distribution must not contain user-specific or company-specific information:
 
-- README.md
-- INSTALLATION_GUIDE.md
-- QUICK_REFERENCE.md
-- CHANGELOG.md
-- etc.
+- **Forbidden**: Absolute paths to user directories (`/home/username/`, `/Users/username/`, `/mnt/c/Users/username/`)
+- **Forbidden**: Personal usernames, company names, department names, product names
+- **Forbidden**: OneDrive paths, cloud storage paths, or any environment-specific absolute paths
+- **Forbidden**: Hardcoded skill installation paths like `~/.claude/skills/` or `/Users/username/Workspace/claude-code-skills/`
+- **Allowed**: Relative paths within the skill bundle (`scripts/example.py`, `references/guide.md`)
+- **Allowed**: Standard placeholders (`~/workspace/project`, `username`, `your-company`)
+- **Best practice**: Reference bundled scripts using simple relative paths like `scripts/script_name.py` - Claude will resolve the actual location
 
-The skill should only contain the information needed for an AI agent to do the job at hand. It should not contain auxilary context about the process that went into creating it, setup and testing procedures, user-facing documentation, etc. Creating additional documentation files just adds clutter and confusion.
+##### Versioning
+
+**CRITICAL**: Skills should NOT contain version history or version numbers in SKILL.md:
+
+- **Forbidden**: Version sections (`## Version`, `## Changelog`, `## Release History`) in SKILL.md
+- **Forbidden**: Version numbers in SKILL.md body content
+- **Correct location**: Skill versions are tracked in marketplace.json under `plugins[].version`
+- **Rationale**: Marketplace infrastructure manages versioning; SKILL.md should be timeless content focused on functionality
+- **Example**: Instead of documenting v1.0.0 → v1.1.0 changes in SKILL.md, update the version in marketplace.json only
 
 ### Progressive Disclosure Design Principle
 
@@ -117,100 +102,35 @@ Skills use a three-level loading system to manage context efficiently:
 
 1. **Metadata (name + description)** - Always in context (~100 words)
 2. **SKILL.md body** - When skill triggers (<5k words)
-3. **Bundled resources** - As needed by Claude (Unlimited because scripts can be executed without reading into context window)
+3. **Bundled resources** - As needed by Claude (Unlimited*)
 
-#### Progressive Disclosure Patterns
+*Unlimited because scripts can be executed without reading into context window.
 
-Keep SKILL.md body to the essentials and under 500 lines to minimize context bloat. Split content into separate files when approaching this limit. When splitting out content into other files, it is very important to reference them from SKILL.md and describe clearly when to read them, to ensure the reader of the skill knows they exist and when to use them.
+### Skill Creation Best Practice
 
-**Key principle:** When a skill supports multiple variations, frameworks, or options, keep only the core workflow and selection guidance in SKILL.md. Move variant-specific details (patterns, examples, configuration) into separate reference files.
+Anthropic has wrote skill authoring best practices, you SHOULD retrieve it before you create or update any skills, the link is https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices.md
 
-**Pattern 1: High-level guide with references**
+## ⚠️ CRITICAL: Edit Skills at Source Location
 
-```markdown
-# PDF Processing
+**NEVER edit skills in `~/.claude/plugins/cache/`** — that's a read-only cache directory. All changes there are:
+- Lost when cache refreshes
+- Not synced to source control
+- Wasted effort requiring manual re-merge
 
-## Quick start
+**ALWAYS verify you're editing the source repository:**
+```bash
+# WRONG - cache location (read-only copy)
+~/.claude/plugins/cache/daymade-skills/my-skill/1.0.0/my-skill/SKILL.md
 
-Extract text with pdfplumber:
-[code example]
-
-## Advanced features
-
-- **Form filling**: See [FORMS.md](FORMS.md) for complete guide
-- **API reference**: See [REFERENCE.md](REFERENCE.md) for all methods
-- **Examples**: See [EXAMPLES.md](EXAMPLES.md) for common patterns
+# RIGHT - source repository
+/path/to/your/claude-code-skills/my-skill/SKILL.md
 ```
 
-Claude loads FORMS.md, REFERENCE.md, or EXAMPLES.md only when needed.
-
-**Pattern 2: Domain-specific organization**
-
-For Skills with multiple domains, organize content by domain to avoid loading irrelevant context:
-
-```
-bigquery-skill/
-├── SKILL.md (overview and navigation)
-└── reference/
-    ├── finance.md (revenue, billing metrics)
-    ├── sales.md (opportunities, pipeline)
-    ├── product.md (API usage, features)
-    └── marketing.md (campaigns, attribution)
-```
-
-When a user asks about sales metrics, Claude only reads sales.md.
-
-Similarly, for skills supporting multiple frameworks or variants, organize by variant:
-
-```
-cloud-deploy/
-├── SKILL.md (workflow + provider selection)
-└── references/
-    ├── aws.md (AWS deployment patterns)
-    ├── gcp.md (GCP deployment patterns)
-    └── azure.md (Azure deployment patterns)
-```
-
-When the user chooses AWS, Claude only reads aws.md.
-
-**Pattern 3: Conditional details**
-
-Show basic content, link to advanced content:
-
-```markdown
-# DOCX Processing
-
-## Creating documents
-
-Use docx-js for new documents. See [DOCX-JS.md](DOCX-JS.md).
-
-## Editing documents
-
-For simple edits, modify the XML directly.
-
-**For tracked changes**: See [REDLINING.md](REDLINING.md)
-**For OOXML details**: See [OOXML.md](OOXML.md)
-```
-
-Claude reads REDLINING.md or OOXML.md only when the user needs those features.
-
-**Important guidelines:**
-
-- **Avoid deeply nested references** - Keep references one level deep from SKILL.md. All reference files should link directly from SKILL.md.
-- **Structure longer reference files** - For files longer than 100 lines, include a table of contents at the top so Claude can see the full scope when previewing.
+**Before any edit**, confirm the file path does NOT contain `/cache/` or `/plugins/cache/`.
 
 ## Skill Creation Process
 
-Skill creation involves these steps:
-
-1. Understand the skill with concrete examples
-2. Plan reusable skill contents (scripts, references, assets)
-3. Initialize the skill (run init_skill.py)
-4. Edit the skill (implement resources and write SKILL.md)
-5. Package the skill (run package_skill.py)
-6. Iterate based on real usage
-
-Follow these steps in order, skipping only if there is a clear reason why they are not applicable.
+To create a skill, follow the "Skill Creation Process" in order, skipping steps only if there is a clear reason why they are not applicable.
 
 ### Step 1: Understanding the Skill with Concrete Examples
 
@@ -234,7 +154,13 @@ Conclude this step when there is a clear sense of the functionality the skill sh
 To turn concrete examples into an effective skill, analyze each example by:
 
 1. Considering how to execute on the example from scratch
-2. Identifying what scripts, references, and assets would be helpful when executing these workflows repeatedly
+2. Determining the appropriate level of freedom for Claude
+3. Identifying what scripts, references, and assets would be helpful when executing these workflows repeatedly
+
+**Match specificity to task risk:**
+- **High freedom (text instructions)**: Multiple valid approaches exist; context determines best path (e.g., code reviews, troubleshooting, content analysis)
+- **Medium freedom (pseudocode with parameters)**: Preferred patterns exist with acceptable variation (e.g., API integration patterns, data processing workflows)
+- **Low freedom (exact scripts)**: Operations are fragile, consistency critical, sequence matters (e.g., PDF rotation, database migrations, form validation)
 
 Example: When building a `pdf-editor` skill to handle queries like "Help me rotate this PDF," the analysis shows:
 
@@ -278,48 +204,81 @@ After initialization, customize or remove the generated SKILL.md and example fil
 
 ### Step 4: Edit the Skill
 
-When editing the (newly-generated or existing) skill, remember that the skill is being created for another instance of Claude to use. Include information that would be beneficial and non-obvious to Claude. Consider what procedural knowledge, domain-specific details, or reusable assets would help another Claude instance execute these tasks more effectively.
-
-#### Learn Proven Design Patterns
-
-Consult these helpful guides based on your skill's needs:
-
-- **Multi-step processes**: See references/workflows.md for sequential workflows and conditional logic
-- **Specific output formats or quality standards**: See references/output-patterns.md for template and example patterns
-
-These files contain established best practices for effective skill design.
+When editing the (newly-generated or existing) skill, remember that the skill is being created for another instance of Claude to use. Focus on including information that would be beneficial and non-obvious to Claude. Consider what procedural knowledge, domain-specific details, or reusable assets would help another Claude instance execute these tasks more effectively.
 
 #### Start with Reusable Skill Contents
 
 To begin implementation, start with the reusable resources identified above: `scripts/`, `references/`, and `assets/` files. Note that this step may require user input. For example, when implementing a `brand-guidelines` skill, the user may need to provide brand assets or templates to store in `assets/`, or documentation to store in `references/`.
 
-Added scripts must be tested by actually running them to ensure there are no bugs and that the output matches what is expected. If there are many similar scripts, only a representative sample needs to be tested to ensure confidence that they all work while balancing time to completion.
+Also, delete any example files and directories not needed for the skill. The initialization script creates example files in `scripts/`, `references/`, and `assets/` to demonstrate structure, but most skills won't need all of them.
 
-Any example files and directories not needed for the skill should be deleted. The initialization script creates example files in `scripts/`, `references/`, and `assets/` to demonstrate structure, but most skills won't need all of them.
+**When updating an existing skill**: Scan all existing reference files to check if they need corresponding updates. New features often require updates to architecture, workflow, or other existing documentation to maintain consistency.
+
+#### Reference File Naming
+
+Filenames must be self-explanatory without reading contents.
+
+**Pattern**: `<content-type>_<specificity>.md`
+
+**Examples**:
+- ❌ `commands.md`, `cli_usage.md`, `reference.md`
+- ✅ `script_parameters.md`, `api_endpoints.md`, `database_schema.md`
+
+**Test**: Can someone understand the file's contents from the name alone?
 
 #### Update SKILL.md
 
-**Writing Guidelines:** Always use imperative/infinitive form.
+**Writing Style:** Write the entire skill using **imperative/infinitive form** (verb-first instructions), not second person. Use objective, instructional language (e.g., "To accomplish X, do Y" rather than "You should do X" or "If you need to do X"). This maintains consistency and clarity for AI consumption.
 
-##### Frontmatter
+To complete SKILL.md, answer the following questions:
 
-Write the YAML frontmatter with `name` and `description`:
+1. What is the purpose of the skill, in a few sentences?
+2. When should the skill be used?
+3. In practice, how should Claude use the skill? All reusable skill contents developed above should be referenced so that Claude knows how to use them.
 
-- `name`: The skill name
-- `description`: This is the primary triggering mechanism for your skill, and helps Claude understand when to use the skill.
-  - Include both what the Skill does and specific triggers/contexts for when to use it.
-  - Include all "when to use" information here - Not in the body. The body is only loaded after triggering, so "When to Use This Skill" sections in the body are not helpful to Claude.
-  - Example description for a `docx` skill: "Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. Use when Claude needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks"
+### Step 5: Security Review
 
-Do not include any other fields in YAML frontmatter.
+Before packaging or distributing a skill, run the security scanner to detect hardcoded secrets and personal information:
 
-##### Body
+```bash
+# Required before packaging
+python scripts/security_scan.py <path/to/skill-folder>
 
-Write instructions for using the skill and its bundled resources.
+# Verbose mode includes additional checks for paths, emails, and code patterns
+python scripts/security_scan.py <path/to/skill-folder> --verbose
+```
 
-### Step 5: Packaging a Skill
+**Detection coverage:**
+- Hardcoded secrets (API keys, passwords, tokens) via gitleaks
+- Personal information (usernames, emails, company names) in verbose mode
+- Unsafe code patterns (command injection risks) in verbose mode
 
-Once development of the skill is complete, it must be packaged into a distributable .skill file that gets shared with the user. The packaging process automatically validates the skill first to ensure it meets all requirements:
+**First-time setup:** Install gitleaks if not present:
+
+```bash
+# macOS
+brew install gitleaks
+
+# Linux/Windows - see script output for installation instructions
+```
+
+**Exit codes:**
+- `0` - Clean (safe to package)
+- `1` - High severity issues
+- `2` - Critical issues (MUST fix before distribution)
+- `3` - gitleaks not installed
+- `4` - Scan error
+
+**Remediation for detected secrets:**
+
+1. Remove hardcoded secrets from all files
+2. Use environment variables: `os.environ.get("API_KEY")`
+3. Rotate credentials if previously committed to git
+4. Re-run scan to verify fixes before packaging
+
+### Step 6: Packaging a Skill
+
+Once the skill is ready, it should be packaged into a distributable zip file that gets shared with the user. The packaging process automatically validates the skill first to ensure it meets all requirements:
 
 ```bash
 scripts/package_skill.py <path/to/skill-folder>
@@ -334,23 +293,51 @@ scripts/package_skill.py <path/to/skill-folder> ./dist
 The packaging script will:
 
 1. **Validate** the skill automatically, checking:
-
    - YAML frontmatter format and required fields
    - Skill naming conventions and directory structure
    - Description completeness and quality
-   - File organization and resource references
+   - **Path reference integrity** - all `scripts/`, `references/`, and `assets/` paths mentioned in SKILL.md must exist
 
-2. **Package** the skill if validation passes, creating a .skill file named after the skill (e.g., `my-skill.skill`) that includes all files and maintains the proper directory structure for distribution. The .skill file is a zip file with a .skill extension.
+2. **Package** the skill if validation passes, creating a zip file named after the skill (e.g., `my-skill.zip`) that includes all files and maintains the proper directory structure for distribution.
+
+**Common validation failure:** If SKILL.md references `scripts/my_script.py` but the file doesn't exist, validation will fail with "Missing referenced files: scripts/my_script.py". Ensure all bundled resources exist before packaging.
 
 If validation fails, the script will report the errors and exit without creating a package. Fix any validation errors and run the packaging command again.
 
-### Step 6: Iterate
+### Step 7: Update Marketplace
+
+After packaging, update the marketplace registry to include the new or updated skill.
+
+**For new skills**, add an entry to `.claude-plugin/marketplace.json`:
+
+```json
+{
+  "name": "skill-name",
+  "description": "Copy from SKILL.md frontmatter description",
+  "source": "./",
+  "strict": false,
+  "version": "1.0.0",
+  "category": "developer-tools",
+  "keywords": ["relevant", "keywords"],
+  "skills": ["./skill-name"]
+}
+```
+
+**For updated skills**, bump the version in `plugins[].version` following semver:
+- Patch (1.0.x): Bug fixes, typo corrections
+- Minor (1.x.0): New features, additional references
+- Major (x.0.0): Breaking changes, restructured workflows
+
+**Also update** `metadata.version` and `metadata.description` if the overall plugin collection changed significantly.
+
+### Step 8: Iterate
 
 After testing the skill, users may request improvements. Often this happens right after using the skill, with fresh context of how the skill performed.
 
 **Iteration workflow:**
-
 1. Use the skill on real tasks
 2. Notice struggles or inefficiencies
 3. Identify how SKILL.md or bundled resources should be updated
 4. Implement changes and test again
+
+**Refinement filter:** Only add what solves observed problems. If best practices already cover it, don't duplicate.
